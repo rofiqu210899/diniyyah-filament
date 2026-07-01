@@ -15,7 +15,7 @@ $wajibSelesai = $totalWajibCount > 0 ? $completedWajibCount >= $totalWajibCount 
     <div class="fi-section-header flex flex-col sm:flex-row sm:items-center gap-3 overflow-hidden px-6 py-4">
         <div class="grid flex-1 gap-y-1">
             <h3 class="fi-section-header-heading text-base font-semibold leading-6 text-gray-950 dark:text-white">
-                Daftar Hafalan Kelas Diniyyah
+                Daftar Hafalan
             </h3>
         </div>
 
@@ -31,7 +31,7 @@ $wajibSelesai = $totalWajibCount > 0 ? $completedWajibCount >= $totalWajibCount 
                             : 'bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:ring-gray-600 dark:hover:bg-gray-700' }}">
                 @if($this->uncekMode)
                 <x-heroicon-s-x-mark class="w-4 h-4" />
-                Batal
+                Selesai
                 @else
                 <x-heroicon-o-arrow-uturn-left class="w-4 h-4" />
                 Edit Hafalan

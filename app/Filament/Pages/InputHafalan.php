@@ -14,8 +14,7 @@ use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Tabs;
-use Filament\Forms\Components\Tabs\Tab;
+
 use Filament\Forms\Components\View;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
@@ -159,35 +158,36 @@ class InputHafalan extends Page implements HasForms
                     ]),
 
                 // ===========================
-                // CARD BIODATA (COLLAPSED)
+                // LAYOUT: IDENTITAS (KIRI) & INPUT HAFALAN (KANAN)
                 // ===========================
 
-                Section::make('Detail Biodata Santri')
+                Grid::make(5)
                     ->hidden(fn(Get $get) => blank($get('santri_id')))
                     ->schema([
-                        Tabs::make('Tabs')
-                            ->tabs([
-                                Tab::make('Data')
-                                    ->icon('heroicon-o-user')
-                                    ->schema([
-                                        Grid::make(3)
-                                            ->schema([
-                                                TextInput::make('noin')->label('NIS')->disabled(),
-                                                TextInput::make('nm')->label('Nama')->disabled(),
-                                                TextInput::make('kelas')->label('Kelas Madin')->disabled(),
-                                                TextInput::make('mustahiq_nama')->label('Mustahiq')->disabled(),
-                                                TextInput::make('nayah')->label('Nama Ayah')->disabled(),
-                                                TextInput::make('unit')->label('Unit Sekolah')->disabled(),
-                                                TextInput::make('ttl')->label('Tempat dan Tanggal Lahir')->disabled()->columnSpan(3),
-                                                Textarea::make('alamat')->label('Alamat')->disabled()->columnSpan(3)->rows(2),
-                                            ])
-                                    ]),
-                                Tab::make('Input Hafalan')
-                                    ->icon('heroicon-o-book-open')
-                                    ->schema([
-                                        View::make('filament.components.hafalan-list')
-                                    ]),
-                            ])
+
+                        // Card Identitas (Kiri - 2 kolom dari 5)
+                        Section::make('Detail Biodata Santri')
+                            ->icon('heroicon-o-user')
+                            ->columnSpan(2)
+                            ->schema([
+                                TextInput::make('noin')->label('NIS')->disabled(),
+                                TextInput::make('nm')->label('Nama')->disabled(),
+                                TextInput::make('kelas')->label('Kelas Madin')->disabled(),
+                                TextInput::make('mustahiq_nama')->label('Mustahiq')->disabled(),
+                                TextInput::make('nayah')->label('Nama Ayah')->disabled(),
+                                TextInput::make('unit')->label('Unit Sekolah')->disabled(),
+                                TextInput::make('ttl')->label('Tempat dan Tanggal Lahir')->disabled(),
+                                Textarea::make('alamat')->label('Alamat')->disabled()->rows(2),
+                            ]),
+
+                        // Card Input Hafalan (Kanan - 3 kolom dari 5)
+                        Section::make('Input Hafalan')
+                            ->icon('heroicon-o-book-open')
+                            ->columnSpan(3)
+                            ->schema([
+                                View::make('filament.components.hafalan-list')
+                            ]),
+
                     ]),
 
             ]);
