@@ -12,7 +12,8 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('inspire')->hourly();
+        // Auto-nonaktifkan tahun ajaran ditangani via Login Event Listener
+        // (App\Listeners\CheckTahunAjaranOnLogin)
     }
 
     /**

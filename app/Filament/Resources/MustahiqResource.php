@@ -6,6 +6,7 @@ use App\Filament\Resources\MustahiqResource\Pages;
 use App\Filament\Resources\MustahiqResource\RelationManagers;
 use App\Models\Madin;
 use App\Models\Mustahiq;
+use App\Models\TahunAjaran;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -28,6 +29,17 @@ class MustahiqResource extends Resource
                 Forms\Components\Section::make('Data Mustahiq')
 
                     ->schema([
+
+                        Forms\Components\Select::make('tahun_ajaran_id')
+                            ->label('Tahun Ajaran')
+                            ->options(
+                                TahunAjaran::where('is_aktif', true)
+                                    ->pluck('nama_tahun_ajaran', 'id')
+                            )
+                            ->default(fn () => TahunAjaran::getAktif()?->id)
+                            ->searchable()
+                            ->preload()
+                            ->required(),
 
                         Forms\Components\TextInput::make('nama_mustahiq')
                             ->label('Nama Mustahiq')
@@ -90,6 +102,14 @@ class MustahiqResource extends Resource
                             ->searchable()
                             ->required(),
 
+                        Forms\Components\Select::make('jk')
+                            ->label('Jenis Kelamin Kelas')
+                            ->options([
+                                1 => 'Putra',
+                                2 => 'Putri',
+                            ])
+                            ->required(),
+
                     ])
 
                     ->columns(2),
@@ -101,6 +121,10 @@ class MustahiqResource extends Resource
     {
         return $table
             ->columns([
+
+                Tables\Columns\TextColumn::make('tahunAjaran.nama_tahun_ajaran')
+                    ->label('Tahun Ajaran')
+                    ->sortable(),
 
                 Tables\Columns\TextColumn::make('nama_mustahiq')
                     ->label('Mustahiq')
@@ -117,8 +141,46 @@ class MustahiqResource extends Resource
                         return "{$record->mkls}{$record->mbag}";
                     }),
 
+                Tables\Columns\TextColumn::make('jk')
+                    ->label('Jenis Kelamin')
+                    ->badge()
+                    ->formatStateUsing(fn ($state) => match ((int) $state) {
+                        1 => 'Putra',
+                        2 => 'Putri',
+                        default => '-',
+                    })
+                    ->color(fn ($state) => match ((int) $state) {
+                        1 => 'info',
+                        2 => 'danger',
+                        default => 'gray',
+                    }),
+
             ])
-            ->defaultSort('tkt')
+            ->defaultSort('tahun_ajaran_id', 'desc')
+            ->filters([
+
+                Tables\Filters\SelectFilter::make('tahun_ajaran_id')
+                    ->label('Tahun Ajaran')
+                    ->options(
+                        TahunAjaran::orderByDesc('id')
+                            ->pluck('nama_tahun_ajaran', 'id')
+                    )
+                    ->default(fn () => TahunAjaran::getAktif()?->id),
+
+                Tables\Filters\SelectFilter::make('tkt')
+                    ->label('Jenjang')
+                    ->options(
+                        Madin::pluck('madin', 'id')
+                    ),
+
+                Tables\Filters\SelectFilter::make('jk')
+                    ->label('Jenis Kelamin')
+                    ->options([
+                        1 => 'Putra',
+                        2 => 'Putri',
+                    ]),
+
+            ])
             ->actions([
                 Tables\Actions\EditAction::make(),
             ])

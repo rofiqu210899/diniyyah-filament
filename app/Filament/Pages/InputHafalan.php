@@ -137,10 +137,21 @@ class InputHafalan extends Page implements HasForms
 
                                 $set('kelas', " {$santri->mkls} {$santri->mbag} {$santri->madin?->madin}");
 
-                                // Cari mustahiq berdasarkan kelas santri
+                                // Jenis kelamin dari buku induk
+                                $jkLabel = match ((int) $santri->jk) {
+                                    1 => 'Putra',
+                                    2 => 'Putri',
+                                    default => '-',
+                                };
+                                $set('jk_label', $jkLabel);
+
+                                // Cari mustahiq berdasarkan kelas santri + jk + tahun ajaran aktif
+                                $tahunAjaranAktif = TahunAjaran::getAktif();
                                 $mustahiq = Mustahiq::where('mkls', $santri->mkls)
                                     ->where('mbag', $santri->mbag)
                                     ->where('tkt', $santri->tkt)
+                                    ->where('jk', $santri->jk)
+                                    ->when($tahunAjaranAktif, fn ($q) => $q->where('tahun_ajaran_id', $tahunAjaranAktif->id))
                                     ->first();
 
                                 $set('mustahiq_nama', $mustahiq?->nama_mustahiq ?? '-');
@@ -172,6 +183,7 @@ class InputHafalan extends Page implements HasForms
                             ->schema([
                                 TextInput::make('noin')->label('NIS')->disabled(),
                                 TextInput::make('nm')->label('Nama')->disabled(),
+                                TextInput::make('jk_label')->label('Jenis Kelamin')->disabled(),
                                 TextInput::make('kelas')->label('Kelas Madin')->disabled(),
                                 TextInput::make('mustahiq_nama')->label('Mustahiq')->disabled(),
                                 TextInput::make('nayah')->label('Nama Ayah')->disabled(),
@@ -215,9 +227,33 @@ class InputHafalan extends Page implements HasForms
      */
     public function loadHafalanSantri($santri): void
     {
+        $tahunAjaranAktif = TahunAjaran::getAktif();
+        $isAktif = $tahunAjaranAktif && $this->selectedTahunAjaranId === $tahunAjaranAktif->id;
+
+        // Cek apakah sudah ada record hafalan di tahun ajaran yang dipilih
+        $existingRecord = HafalanSantri::where('santri_id', $santri->id)
+            ->where('tahun_ajaran_id', $this->selectedTahunAjaranId)
+            ->first();
+
+        if ($existingRecord) {
+            // Sudah ada record → kunci kelas sesuai record yang tersimpan
+            // (mencegah mixing kelas dalam satu tahun ajaran)
+            $mkls = $existingRecord->mkls;
+            $tkt = $existingRecord->tkt;
+        } elseif ($isAktif) {
+            // Tahun ajaran aktif, belum ada record → pakai kelas saat ini dari bukuinduk
+            $mkls = $santri->mkls;
+            $tkt = $santri->tkt;
+        } else {
+            // Tahun ajaran lama, tidak ada record → kosongkan
+            $this->hafalanList = [];
+            $this->hafalanChecked = [];
+            return;
+        }
+
         // Ambil data hafalan berdasarkan kelas diniyyah
-        $this->hafalanList = DataHafalan::where('mkls', $santri->mkls)
-            ->where('tkt', $santri->tkt)
+        $this->hafalanList = DataHafalan::where('mkls', $mkls)
+            ->where('tkt', $tkt)
             ->orderBy('kriteria') // Wajib dulu
             ->orderBy('nama_hafalan')
             ->get()

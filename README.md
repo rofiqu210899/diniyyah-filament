@@ -1,66 +1,241 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 📚 Diniyyah Filament
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Sistem Informasi Manajemen Madrasah Diniyyah berbasis web yang dibangun menggunakan **Laravel 10** dan **Filament 3**. Aplikasi ini dirancang untuk membantu pengelolaan data santri, pencatatan hafalan, dan administrasi akademik lembaga pendidikan Diniyyah.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## ✨ Fitur Utama
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### 📖 Manajemen Hafalan
+- **Input Hafalan Santri** — Halaman interaktif untuk mencatat progres hafalan setiap santri dengan sistem checkbox.
+- **Klasifikasi Hafalan** — Hafalan dibedakan menjadi **Wajib** dan **Sunnah**, dengan validasi bahwa hafalan Sunnah hanya bisa dicentang setelah seluruh hafalan Wajib diselesaikan.
+- **Data Hafalan per Kelas** — Pengaturan daftar hafalan yang harus diselesaikan berdasarkan jenjang (Ula, Wustho, Ulya) dan kelas (1–6).
+- **Riwayat Hafalan** — Pencatatan historis kelas, jenjang, dan unit sekolah saat santri menyelesaikan hafalan.
+- **Mode Uncek (Admin)** — Fitur khusus untuk membatalkan hafalan yang sudah ditandai tuntas.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 👤 Manajemen Data Santri
+- **Buku Induk** — Database lengkap santri meliputi NIS, nama, tempat/tanggal lahir, nama ayah, unit sekolah, dan alamat lengkap (kelurahan, kecamatan, kabupaten, provinsi).
+- **Biodata Otomatis** — Detail biodata santri ditampilkan secara otomatis saat pencarian di halaman input hafalan.
 
-## Learning Laravel
+### 🏫 Administrasi Akademik
+- **Tahun Ajaran** — Pengelolaan tahun ajaran dengan mekanisme aktivasi (hanya satu tahun ajaran aktif pada satu waktu).
+- **Mustahiq (Wali Kelas)** — Pendataan mustahiq per kelas, bagian, dan jenjang Madin.
+- **Jenjang Madin** — Mendukung tiga jenjang: Ula, Wustho, dan Ulya.
+- **Unit Sekolah** — Pengelolaan unit-unit sekolah formal yang terintegrasi.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+---
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## 🛠️ Tech Stack
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+| Komponen       | Teknologi                                      |
+|----------------|-------------------------------------------------|
+| **Framework**  | [Laravel 10](https://laravel.com)               |
+| **Admin Panel**| [Filament 3](https://filamentphp.com)           |
+| **PHP**        | >= 8.1                                          |
+| **Database**   | MySQL                                           |
+| **Frontend**   | Blade, Livewire (via Filament), Vite            |
+| **Auth**       | Laravel Sanctum                                 |
 
-## Laravel Sponsors
+---
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+## 📂 Struktur Proyek
 
-### Premium Partners
+```
+diniyyah-filament/
+├── app/
+│   ├── Filament/
+│   │   ├── Pages/
+│   │   │   └── InputHafalan.php        # Halaman input hafalan santri
+│   │   └── Resources/
+│   │       ├── DataHafalanResource.php  # CRUD data hafalan per kelas
+│   │       ├── MustahiqResource.php     # CRUD data mustahiq
+│   │       └── TahunAjaranResource.php  # Pengelolaan tahun ajaran
+│   └── Models/
+│       ├── bukuinduk.php                # Model data santri (buku induk)
+│       ├── DataHafalan.php              # Model daftar hafalan per kelas
+│       ├── HafalanSantri.php            # Model pencatatan hafalan santri
+│       ├── Madin.php                    # Model jenjang Madin
+│       ├── Mustahiq.php                 # Model wali kelas / mustahiq
+│       ├── TahunAjaran.php              # Model tahun ajaran
+│       ├── unit.php                     # Model unit sekolah
+│       ├── provinsi.php                 # Model data provinsi
+│       ├── kabupaten.php                # Model data kabupaten/kota
+│       ├── kecamatan.php                # Model data kecamatan
+│       └── kelurahan.php                # Model data kelurahan
+├── database/
+│   └── migrations/                      # Skema database
+├── resources/
+│   └── views/
+│       └── filament/
+│           └── components/
+│               └── hafalan-list.blade.php  # Komponen tampilan daftar hafalan
+└── ...
+```
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+---
 
-## Contributing
+## 📊 Entity Relationship
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```mermaid
+erDiagram
+    bukuinduk ||--o{ HafalanSantri : "memiliki"
+    DataHafalan ||--o{ HafalanSantri : "direferensikan"
+    TahunAjaran ||--o{ HafalanSantri : "periode"
+    Madin ||--o{ bukuinduk : "jenjang"
+    Madin ||--o{ Mustahiq : "jenjang"
+    Madin ||--o{ DataHafalan : "jenjang"
+    unit ||--o{ bukuinduk : "sekolah"
+    provinsi ||--o{ bukuinduk : "alamat"
+    kabupaten ||--o{ bukuinduk : "alamat"
+    kecamatan ||--o{ bukuinduk : "alamat"
+    kelurahan ||--o{ bukuinduk : "alamat"
 
-## Code of Conduct
+    bukuinduk {
+        int id PK
+        string noin "NIS"
+        string nm "Nama"
+        int mkls "Kelas Madin"
+        string mbag "Bagian"
+        int tkt "Jenjang FK"
+        int unit "Unit FK"
+    }
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+    DataHafalan {
+        int id PK
+        int mkls "Kelas"
+        int tkt "Jenjang FK"
+        string nama_hafalan
+        string kriteria "Wajib/Sunnah"
+        text keterangan
+    }
 
-## Security Vulnerabilities
+    HafalanSantri {
+        int id PK
+        int santri_id FK
+        int data_hafalan_id FK
+        int tahun_ajaran_id FK
+        int mkls "Snapshot kelas"
+        int tkt "Snapshot jenjang"
+        string kls "Snapshot kelas formal"
+        string unit "Snapshot unit"
+    }
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+    TahunAjaran {
+        int id PK
+        string nama_tahun_ajaran
+        boolean is_aktif
+    }
 
-## License
+    Mustahiq {
+        int id PK
+        string nama_mustahiq
+        int mkls "Kelas"
+        string mbag "Bagian"
+        int tkt "Jenjang FK"
+    }
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+    Madin {
+        int id PK
+        string madin "Nama Jenjang"
+    }
+```
+
+---
+
+## 🚀 Instalasi
+
+### Prasyarat
+
+- PHP >= 8.1
+- Composer
+- MySQL
+- Node.js & NPM
+
+### Langkah-langkah
+
+1. **Clone repository**
+   ```bash
+   git clone https://github.com/rofiqu210899/diniyyah-filament.git
+   cd diniyyah-filament
+   ```
+
+2. **Install dependensi PHP**
+   ```bash
+   composer install
+   ```
+
+3. **Install dependensi frontend**
+   ```bash
+   npm install
+   ```
+
+4. **Konfigurasi environment**
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
+
+5. **Konfigurasi database**
+
+   Edit file `.env` dan sesuaikan pengaturan database:
+   ```env
+   DB_CONNECTION=mysql
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_DATABASE=diniyyah_filament
+   DB_USERNAME=root
+   DB_PASSWORD=
+   ```
+
+6. **Jalankan migrasi database**
+   ```bash
+   php artisan migrate
+   ```
+
+7. **Buat akun admin Filament**
+   ```bash
+   php artisan make:filament-user
+   ```
+
+8. **Build asset frontend**
+   ```bash
+   npm run build
+   ```
+
+9. **Jalankan server**
+   ```bash
+   php artisan serve
+   ```
+
+10. **Akses aplikasi**
+
+    Buka browser dan kunjungi:
+    - **Admin Panel**: [http://localhost:8000/admin](http://localhost:8000/admin)
+
+---
+
+## 📋 Alur Penggunaan
+
+1. **Setup Awal**
+   - Tambahkan data **Tahun Ajaran** dan aktifkan salah satu.
+   - Pastikan data **jenjang Madin** (Ula, Wustho, Ulya) sudah tersedia.
+   - Input data **Mustahiq** untuk setiap kelas/bagian.
+   - Input daftar **Data Hafalan** per kelas dan jenjang (Wajib/Sunnah).
+
+2. **Input Hafalan Harian**
+   - Buka menu **Input Hafalan**.
+   - Cari santri berdasarkan NIS atau nama.
+   - Biodata santri akan tampil otomatis.
+   - Centang hafalan yang sudah diselesaikan.
+   - Hafalan **Sunnah** hanya bisa dicentang setelah semua hafalan **Wajib** selesai.
+
+3. **Review & Koreksi**
+   - Gunakan **mode uncek** untuk membatalkan hafalan jika terjadi kesalahan.
+   - Hafalan hanya bisa diubah pada **tahun ajaran yang sedang aktif**.
+   - Data tahun ajaran sebelumnya hanya bisa dilihat (read-only).
+
+---
+
+## 📄 Lisensi
+
+Proyek ini menggunakan framework [Laravel](https://laravel.com) yang dilisensikan di bawah [MIT License](https://opensource.org/licenses/MIT).

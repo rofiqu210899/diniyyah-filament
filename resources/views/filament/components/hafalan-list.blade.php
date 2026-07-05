@@ -57,7 +57,7 @@ $wajibSelesai = $totalWajibCount > 0 ? $completedWajibCount >= $totalWajibCount 
         <div class="px-6 py-3 bg-blue-50 border-b border-blue-100 dark:bg-blue-500/10 dark:border-blue-500/20">
             <p class="text-sm font-medium text-blue-800 dark:text-blue-400 flex items-center gap-2">
                 <x-heroicon-o-information-circle class="w-5 h-5 flex-shrink-0" />
-                Anda sedang melihat data historis. Untuk mengubah hafalan, pilih tahun ajaran yang aktif.
+                Data hafalan masa lampau telah dikunci permanen.
             </p>
         </div>
         @endif
