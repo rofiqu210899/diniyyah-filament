@@ -23,6 +23,9 @@ class DataHafalanResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Data Hafalan';
 
+    protected static ?string $navigationGroup = 'Pengaturan';
+
+
     public static function form(Form $form): Form
     {
         return $form

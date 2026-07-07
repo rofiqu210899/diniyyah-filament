@@ -18,9 +18,10 @@ class Rekapitulasi extends Page implements HasForms
     use InteractsWithForms;
 
     protected static ?string $navigationIcon = 'heroicon-o-document-arrow-down';
-    protected static ?string $navigationLabel = 'Rekapitulasi';
-    protected static ?string $title = 'Unduh Rekapitulasi';
+    protected static ?string $navigationLabel = 'Ahad Legi';
+    protected static ?string $title = 'Rekapitulasi Ahad Legi';
     protected static string $view = 'filament.pages.rekapitulasi';
+    protected static ?string $navigationGroup = 'Laporan';
 
     public ?array $data = [];
 

@@ -35,4 +35,14 @@ class bukuinduk extends Model
     {
         return $this->belongsTo(provinsi::class, 'prov', 'id_prov');
     }
+
+    public function Funjurusan()
+    {
+        return $this->belongsTo(jurusan::class, 'jur', 'id');
+    }
+
+    public function Funkelas()
+    {
+        return $this->belongsTo(kelas::class, 'kls', 'idkls');
+    }
 }

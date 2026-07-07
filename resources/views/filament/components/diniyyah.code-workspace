@@ -1,10 +1,16 @@
 {
 	"folders": [
 		{
-			"path": "../../../../../../24. DINIYYAH/diniyyah"
+			"name": "diniyyah-filament",
+			"path": "../../../.."
 		},
 		{
-			"path": "../../../.."
+			"name": "1. smp",
+			"path": "../../../../../../1. smp"
+		},
+		{
+			"name": "23. SKL",
+			"path": "../../../../../../23. SKL"
 		}
 	],
 	"settings": {}

@@ -20,7 +20,7 @@ class MustahiqResource extends Resource
     protected static ?string $model = Mustahiq::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-
+    protected static ?string $navigationGroup = 'Pengaturan';
     public static function form(Form $form): Form
     {
         return $form
@@ -36,7 +36,7 @@ class MustahiqResource extends Resource
                                 TahunAjaran::where('is_aktif', true)
                                     ->pluck('nama_tahun_ajaran', 'id')
                             )
-                            ->default(fn () => TahunAjaran::getAktif()?->id)
+                            ->default(fn() => TahunAjaran::getAktif()?->id)
                             ->searchable()
                             ->preload()
                             ->required(),
@@ -144,12 +144,12 @@ class MustahiqResource extends Resource
                 Tables\Columns\TextColumn::make('jk')
                     ->label('Jenis Kelamin')
                     ->badge()
-                    ->formatStateUsing(fn ($state) => match ((int) $state) {
+                    ->formatStateUsing(fn($state) => match ((int) $state) {
                         1 => 'Putra',
                         2 => 'Putri',
                         default => '-',
                     })
-                    ->color(fn ($state) => match ((int) $state) {
+                    ->color(fn($state) => match ((int) $state) {
                         1 => 'info',
                         2 => 'danger',
                         default => 'gray',
@@ -165,7 +165,7 @@ class MustahiqResource extends Resource
                         TahunAjaran::orderByDesc('id')
                             ->pluck('nama_tahun_ajaran', 'id')
                     )
-                    ->default(fn () => TahunAjaran::getAktif()?->id),
+                    ->default(fn() => TahunAjaran::getAktif()?->id),
 
                 Tables\Filters\SelectFilter::make('tkt')
                     ->label('Jenjang')

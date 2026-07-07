@@ -14,4 +14,9 @@ class unit extends Model
     {
         return $this->hasMany(bukuinduk::class, 'unit', 'id');
     }
+
+    public function jurusan()
+    {
+        return $this->hasMany(jurusan::class, 'unit', 'id');
+    }
 }

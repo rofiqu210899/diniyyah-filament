@@ -52,19 +52,36 @@ class RekapPertingkatanSheet implements FromView, WithTitle, ShouldAutoSize
             ->orderBy('id')
             ->get();
 
+        // ==========================================
+        // OPTIMASI QUERY (MENCEGAH N+1)
+        // ==========================================
+        // Ambil semua santri di tingkatan ini sekaligus (1 Query)
+        $allStudents = bukuinduk::where('tkt', $this->tktId)->get();
+        $allStudentIds = $allStudents->pluck('id')->toArray();
+
+        // Kelompokkan santri berdasarkan (mkls_mbag_jk) dalam memory untuk fast lookup
+        $studentsGrouped = $allStudents->groupBy(function ($student) {
+            return "{$student->mkls}_{$student->mbag}_{$student->jk}";
+        });
+
+        // Ambil semua record hafalan santri-santri ini pada tahun ajaran terpilih sekaligus (1 Query)
+        $allHafalanRecords = HafalanSantri::where('tahun_ajaran_id', $this->tahunAjaranId)
+            ->whereIn('santri_id', $allStudentIds)
+            ->get();
+
+        // Kelompokkan record hafalan berdasarkan santri_id dalam memory
+        $hafalanRecordsGrouped = $allHafalanRecords->groupBy('santri_id');
+        // ==========================================
+
         // 4. Proses data per kelas
         $rowsGroupedByGrade = [];
 
         foreach ($classes as $class) {
-            // Ambil santri di kelas ini (mkls, mbag, tkt, jk)
-            $students = bukuinduk::where('mkls', $class->mkls)
-                ->where('mbag', $class->mbag)
-                ->where('tkt', $class->tkt)
-                ->where('jk', $class->jk)
-                ->get();
+            // Ambil santri untuk kelas ini dari memory
+            $key = "{$class->mkls}_{$class->mbag}_{$class->jk}";
+            $students = $studentsGrouped->get($key, collect());
 
             $jumlahSantri = $students->count();
-            $studentIds = $students->pluck('id')->toArray();
 
             // Ambil hafalan yang dipetakan ke kelas ini (mkls)
             $classHafalans = $hafalans->where('mkls', $class->mkls);
@@ -73,24 +90,26 @@ class RekapPertingkatanSheet implements FromView, WithTitle, ShouldAutoSize
             // Hitung penyelesaian hafalan per hafalan (hanya untuk hafalan kelas ini)
             $hafalanCompletions = [];
             foreach ($classHafalans as $hafalan) {
-                if (count($studentIds) > 0) {
-                    $count = HafalanSantri::where('tahun_ajaran_id', $this->tahunAjaranId)
-                        ->whereIn('santri_id', $studentIds)
-                        ->where('data_hafalan_id', $hafalan->id)
-                        ->count();
-                    $hafalanCompletions[$hafalan->id] = $count;
-                } else {
-                    $hafalanCompletions[$hafalan->id] = 0;
+                $count = 0;
+                foreach ($students as $student) {
+                    $completedIds = $hafalanRecordsGrouped->get($student->id, collect())
+                        ->pluck('data_hafalan_id')
+                        ->all();
+                    if (in_array($hafalan->id, $completedIds)) {
+                        $count++;
+                    }
                 }
+                $hafalanCompletions[$hafalan->id] = $count;
             }
 
             // Hitung total hafalan kelas yang diselesaikan oleh seluruh santri
             $totalCompletedForClass = 0;
-            if (count($classHafalanIds) > 0 && count($studentIds) > 0) {
-                $totalCompletedForClass = HafalanSantri::where('tahun_ajaran_id', $this->tahunAjaranId)
-                    ->whereIn('santri_id', $studentIds)
-                    ->whereIn('data_hafalan_id', $classHafalanIds)
-                    ->count();
+            foreach ($students as $student) {
+                $completedIds = $hafalanRecordsGrouped->get($student->id, collect())
+                    ->pluck('data_hafalan_id')
+                    ->all();
+                $completedForClass = array_intersect($classHafalanIds, $completedIds);
+                $totalCompletedForClass += count($completedForClass);
             }
 
             // Statistik: Rata-rata
@@ -99,13 +118,13 @@ class RekapPertingkatanSheet implements FromView, WithTitle, ShouldAutoSize
             // Statistik: Point Wajib (Jumlah santri yang tuntas semua hafalan wajib)
             $wajibHafalanIds = $classHafalans->where('kriteria', 'Wajib')->pluck('id')->toArray();
             $pointWajib = 0;
-            if (count($wajibHafalanIds) > 0 && count($studentIds) > 0) {
+            if (count($wajibHafalanIds) > 0) {
                 foreach ($students as $student) {
-                    $studentWajibCount = HafalanSantri::where('tahun_ajaran_id', $this->tahunAjaranId)
-                        ->where('santri_id', $student->id)
-                        ->whereIn('data_hafalan_id', $wajibHafalanIds)
-                        ->count();
-                    if ($studentWajibCount === count($wajibHafalanIds)) {
+                    $completedIds = $hafalanRecordsGrouped->get($student->id, collect())
+                        ->pluck('data_hafalan_id')
+                        ->all();
+                    $intersect = array_intersect($wajibHafalanIds, $completedIds);
+                    if (count($intersect) === count($wajibHafalanIds)) {
                         $pointWajib++;
                     }
                 }
@@ -114,13 +133,13 @@ class RekapPertingkatanSheet implements FromView, WithTitle, ShouldAutoSize
             // Statistik: Poin Sunnah (Jumlah santri yang menghafal minimal 1 hafalan sunnah)
             $sunnahHafalanIds = $classHafalans->where('kriteria', 'Sunnah')->pluck('id')->toArray();
             $poinSunnah = 0;
-            if (count($sunnahHafalanIds) > 0 && count($studentIds) > 0) {
+            if (count($sunnahHafalanIds) > 0) {
                 foreach ($students as $student) {
-                    $studentSunnahCount = HafalanSantri::where('tahun_ajaran_id', $this->tahunAjaranId)
-                        ->where('santri_id', $student->id)
-                        ->whereIn('data_hafalan_id', $sunnahHafalanIds)
-                        ->count();
-                    if ($studentSunnahCount > 0) {
+                    $completedIds = $hafalanRecordsGrouped->get($student->id, collect())
+                        ->pluck('data_hafalan_id')
+                        ->all();
+                    $intersect = array_intersect($sunnahHafalanIds, $completedIds);
+                    if (count($intersect) > 0) {
                         $poinSunnah++;
                     }
                 }
