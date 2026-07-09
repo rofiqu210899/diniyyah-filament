@@ -77,6 +77,11 @@
                                             Madin
                                         </th>
                                     @endif
+                                    @if($jenisPendidikan === 'madin')
+                                        <th class="px-2 py-2 font-semibold text-gray-600 dark:text-gray-300 border-b border-gray-200 dark:border-white/10 whitespace-nowrap sticky left-[266px] bg-gray-50 dark:bg-gray-800 z-10" style="min-width: 90px;">
+                                            Kurikulum
+                                        </th>
+                                    @endif
                                     @foreach($headerHafalan as $hafalan)
                                         <th class="px-1.5 py-2 font-semibold border-b border-gray-200 dark:border-white/10 text-center whitespace-nowrap {{ $hafalan['kriteria'] === 'Wajib' ? 'text-red-600 dark:text-red-400' : ($hafalan['kriteria'] === 'Sunnah' ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400') }}" style="min-width: 36px;">
                                             <div class="flex flex-col items-center gap-0">
@@ -109,6 +114,11 @@
                                         @if($jenisPendidikan === 'kurikulum')
                                             <td class="px-2 py-1.5 text-gray-600 dark:text-gray-400 sticky left-[266px] z-10 {{ $stickyBg }} whitespace-nowrap">
                                                 {{ $row['madin_label'] ?? '-' }}
+                                            </td>
+                                        @endif
+                                        @if($jenisPendidikan === 'madin')
+                                            <td class="px-2 py-1.5 text-gray-600 dark:text-gray-400 sticky left-[266px] z-10 {{ $stickyBg }} whitespace-nowrap">
+                                                {{ $row['kurikulum_label'] ?? '-' }}
                                             </td>
                                         @endif
                                         @foreach($headerHafalan as $hafalan)

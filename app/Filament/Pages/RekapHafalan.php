@@ -302,7 +302,8 @@ class RekapHafalan extends Page implements HasForms
             ->toArray();
 
         // 2. Ambil santri dari bukuinduk yang belum punya setoran tapi masuk kelas ini
-        $bukuindukQuery = bukuinduk::where('unit', $unitId)
+        $bukuindukQuery = bukuinduk::with(['Funkelas', 'unitSekolah'])
+            ->where('unit', $unitId)
             ->where('kls', $kelasId)
             ->where('deleted', 0);
 
@@ -318,7 +319,7 @@ class RekapHafalan extends Page implements HasForms
             ->get();
 
         // 3. Ambil data lengkap santri dari hafalan
-        $santriDariHafalan = bukuinduk::whereIn('id', $santriIdsFromHafalan)->get();
+        $santriDariHafalan = bukuinduk::with(['Funkelas', 'unitSekolah'])->whereIn('id', $santriIdsFromHafalan)->get();
 
         // Jika jurusan/bagian dipilih, filter santri dari hafalan juga
         if ($jurusanId) {
@@ -371,7 +372,8 @@ class RekapHafalan extends Page implements HasForms
         }
 
         // 1. Santri dari bukuinduk (kelas terkini)
-        $santriDariBukuinduk = bukuinduk::where('mkls', $mkls)
+        $santriDariBukuinduk = bukuinduk::with(['Funkelas', 'unitSekolah'])
+            ->where('mkls', $mkls)
             ->where('mbag', $mbag)
             ->where('tkt', $tkt)
             ->where('jk', $jk)
@@ -397,7 +399,7 @@ class RekapHafalan extends Page implements HasForms
             ->pluck('santri_id')
             ->toArray();
 
-        $santriDariHafalan = bukuinduk::whereIn('id', $santriIdsFromHafalan)->get();
+        $santriDariHafalan = bukuinduk::with(['Funkelas', 'unitSekolah'])->whereIn('id', $santriIdsFromHafalan)->get();
 
         // 3. Gabungkan
         $semuaSantri = $santriDariBukuinduk->merge($santriDariHafalan)->unique('id')->sortBy('nm');
@@ -429,37 +431,43 @@ class RekapHafalan extends Page implements HasForms
             ->get()
             ->groupBy('santri_id');
 
-        // Cari capaian tertinggi (max tkt dan max mkls)
-        $maxTkt = 1;
-        $maxMkls = 1;
+        if ($this->jenisPendidikan === 'madin') {
+            // Jika filter Madin, sesuaikan header dengan tingkat diniyyah yang dipilih
+            $maxTkt = (int) ($this->data['madin_tkt'] ?? 1);
+            $maxMkls = (int) ($this->data['madin_mkls'] ?? 1);
+        } else {
+            // Cari capaian tertinggi (max tkt dan max mkls) secara dinamis untuk kurikulum
+            $maxTkt = 1;
+            $maxMkls = 1;
 
-        // 1. Dari data kelas berjalan santri (bukuinduk)
-        foreach ($semuaSantri as $santri) {
-            $sTkt = (int) $santri->tkt;
-            $sMkls = (int) $santri->mkls;
+            // 1. Dari data kelas berjalan santri (bukuinduk)
+            foreach ($semuaSantri as $santri) {
+                $sTkt = (int) $santri->tkt;
+                $sMkls = (int) $santri->mkls;
 
-            if ($sTkt > $maxTkt) {
-                $maxTkt = $sTkt;
-                $maxMkls = $sMkls;
-            } elseif ($sTkt === $maxTkt) {
-                if ($sMkls > $maxMkls) {
+                if ($sTkt > $maxTkt) {
+                    $maxTkt = $sTkt;
                     $maxMkls = $sMkls;
+                } elseif ($sTkt === $maxTkt) {
+                    if ($sMkls > $maxMkls) {
+                        $maxMkls = $sMkls;
+                    }
                 }
             }
-        }
 
-        // 2. Dari data historis setoran hafalan santri
-        foreach ($hafalanTuntas as $sId => $setorans) {
-            foreach ($setorans as $setoran) {
-                $hTkt = (int) $setoran->tkt;
-                $hMkls = (int) $setoran->mkls;
+            // 2. Dari data historis setoran hafalan santri
+            foreach ($hafalanTuntas as $sId => $setorans) {
+                foreach ($setorans as $setoran) {
+                    $hTkt = (int) $setoran->tkt;
+                    $hMkls = (int) $setoran->mkls;
 
-                if ($hTkt > $maxTkt) {
-                    $maxTkt = $hTkt;
-                    $maxMkls = $hMkls;
-                } elseif ($hTkt === $maxTkt) {
-                    if ($hMkls > $maxMkls) {
+                    if ($hTkt > $maxTkt) {
+                        $maxTkt = $hTkt;
                         $maxMkls = $hMkls;
+                    } elseif ($hTkt === $maxTkt) {
+                        if ($hMkls > $maxMkls) {
+                            $maxMkls = $hMkls;
+                        }
                     }
                 }
             }
@@ -509,12 +517,22 @@ class RekapHafalan extends Page implements HasForms
             // Build madin label: "2 G Ula"
             $madinLabel = $santri->mkls . ' ' . ($santri->mbag ?? '') . ' ' . ($madinCache[$santri->tkt] ?? '-');
 
+            // Build kurikulum label: "X A SMA"
+            $unitName = $santri->unitSekolah?->unit ?? '';
+            $kelasName = $santri->Funkelas?->nmkls ?? '';
+            $bagName = $santri->bag ?? '';
+            $kurikulumLabel = trim("{$kelasName} {$bagName} {$unitName}");
+            if (empty($kurikulumLabel)) {
+                $kurikulumLabel = '-';
+            }
+
             return [
                 'id' => $santri->id,
                 'noin' => $santri->noin,
                 'nama' => $santri->nm,
                 'tkt' => $santri->tkt,
                 'madin_label' => trim($madinLabel),
+                'kurikulum_label' => $kurikulumLabel,
                 'hafalan' => $hafalanStatus,
             ];
         })->toArray();
