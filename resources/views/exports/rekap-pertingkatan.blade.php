@@ -41,7 +41,10 @@
                 
                 <!-- Kolom Hafalan Khusus Kelas Tingkatan Ini -->
                 @foreach($classHafalans as $hafalan)
-                    <th rowspan="2" style="border: 1px solid #000000; font-weight: bold; text-align: center; background-color: {{ $hafalan->kriteria == 'Wajib' ? '#FCE4D6' : ($hafalan->kriteria == 'Sunnah' ? '#E2EFDA' : '#FFF2CC') }}; color: #000000; vertical-align: middle;">
+                    @php
+                        $bgColor = $hafalan->kriteria == 'Wajib' ? '#FCE4D6' : ($hafalan->kriteria == 'Sunnah' ? '#E2EFDA' : '#FFF2CC');
+                    @endphp
+                    <th rowspan="2" style="{{ 'border: 1px solid #000000; font-weight: bold; text-align: center; background-color: ' . $bgColor . '; color: #000000; vertical-align: middle;' }}">
                         {{ $hafalan->nama_hafalan }}<br>({{ $hafalan->kriteria }})
                     </th>
                 @endforeach

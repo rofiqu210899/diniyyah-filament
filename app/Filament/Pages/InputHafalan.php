@@ -35,16 +35,16 @@ class InputHafalan extends Page implements HasForms
 
     public ?array $data = [];
 
-    // Data hafalan yang ditampilkan sebagai checkbox
+    
     public array $hafalanList = [];
 
-    // Hafalan yang sudah dicentang (ID)
+    
     public array $hafalanChecked = [];
 
-    // ID tahun ajaran yang sedang dipilih di tab hafalan
+    
     public ?int $selectedTahunAjaranId = null;
 
-    // Mode edit uncek (toggle untuk admin)
+    
     public bool $uncekMode = false;
 
     public function mount(): void
@@ -137,7 +137,7 @@ class InputHafalan extends Page implements HasForms
 
                                 $set('kelas', " {$santri->mkls} {$santri->mbag} {$santri->madin?->madin}");
 
-                                // Jenis kelamin dari buku induk
+                                
                                 $jkLabel = match ((int) $santri->jk) {
                                     1 => 'Putra',
                                     2 => 'Putri',
@@ -145,7 +145,7 @@ class InputHafalan extends Page implements HasForms
                                 };
                                 $set('jk_label', $jkLabel);
 
-                                // Cari mustahiq berdasarkan kelas santri + jk + tahun ajaran aktif
+                                
                                 $tahunAjaranAktif = TahunAjaran::getAktif();
                                 $mustahiq = Mustahiq::where('mkls', $santri->mkls)
                                     ->where('mbag', $santri->mbag)
@@ -156,27 +156,27 @@ class InputHafalan extends Page implements HasForms
 
                                 $set('mustahiq_nama', $mustahiq?->nama_mustahiq ?? '-');
 
-                                // Reset uncek mode
+                                
                                 $this->uncekMode = false;
 
-                                // Reset tahun ajaran ke aktif
+                                
                                 $tahunAjaran = TahunAjaran::getAktif();
                                 $this->selectedTahunAjaranId = $tahunAjaran?->id;
 
-                                // Load data hafalan berdasarkan kelas diniyyah santri
+                                
                                 $this->loadHafalanSantri($santri);
                             }),
                     ]),
 
-                // ===========================
-                // LAYOUT: IDENTITAS (KIRI) & INPUT HAFALAN (KANAN)
-                // ===========================
+                
+                
+                
 
                 Grid::make(5)
                     ->hidden(fn(Get $get) => blank($get('santri_id')))
                     ->schema([
 
-                        // Card Identitas (Kiri - 2 kolom dari 5)
+                        
                         Section::make('Detail Biodata Santri')
                             ->icon('heroicon-o-user')
                             ->columnSpan(2)
@@ -192,7 +192,7 @@ class InputHafalan extends Page implements HasForms
                                 Textarea::make('alamat')->label('Alamat')->disabled()->rows(2),
                             ]),
 
-                        // Card Input Hafalan (Kanan - 3 kolom dari 5)
+                        
                         Section::make('Input Hafalan')
                             ->icon('heroicon-o-book-open')
                             ->columnSpan(3)
@@ -205,9 +205,7 @@ class InputHafalan extends Page implements HasForms
             ]);
     }
 
-    /**
-     * Ganti tahun ajaran yang dipilih dan reload data hafalan
-     */
+    
     public function changeTahunAjaran(int $tahunAjaranId): void
     {
         $this->selectedTahunAjaranId = $tahunAjaranId;
@@ -222,44 +220,42 @@ class InputHafalan extends Page implements HasForms
         $this->loadHafalanSantri($santri);
     }
 
-    /**
-     * Load data hafalan berdasarkan kelas diniyyah santri
-     */
+    
     public function loadHafalanSantri($santri): void
     {
         $tahunAjaranAktif = TahunAjaran::getAktif();
         $isAktif = $tahunAjaranAktif && $this->selectedTahunAjaranId === $tahunAjaranAktif->id;
 
-        // Cek apakah sudah ada record hafalan di tahun ajaran yang dipilih
+        
         $existingRecord = HafalanSantri::where('santri_id', $santri->id)
             ->where('tahun_ajaran_id', $this->selectedTahunAjaranId)
             ->first();
 
         if ($existingRecord) {
-            // Sudah ada record → kunci kelas sesuai record yang tersimpan
-            // (mencegah mixing kelas dalam satu tahun ajaran)
+            
+            
             $mkls = $existingRecord->mkls;
             $tkt = $existingRecord->tkt;
         } elseif ($isAktif) {
-            // Tahun ajaran aktif, belum ada record → pakai kelas saat ini dari bukuinduk
+            
             $mkls = $santri->mkls;
             $tkt = $santri->tkt;
         } else {
-            // Tahun ajaran lama, tidak ada record → kosongkan
+            
             $this->hafalanList = [];
             $this->hafalanChecked = [];
             return;
         }
 
-        // Ambil data hafalan berdasarkan kelas diniyyah
+        
         $this->hafalanList = DataHafalan::where('mkls', $mkls)
             ->where('tkt', $tkt)
-            ->orderBy('kriteria') // Wajib dulu
+            ->orderBy('kriteria') 
             ->orderBy('nama_hafalan')
             ->get()
             ->toArray();
 
-        // Ambil hafalan yang sudah dicentang untuk tahun ajaran yang dipilih
+        
         $this->hafalanChecked = [];
 
         if ($this->selectedTahunAjaranId) {
@@ -271,14 +267,12 @@ class InputHafalan extends Page implements HasForms
         }
     }
 
-    /**
-     * Set hafalan sebagai tuntas (centang) — dipanggil dari Blade
-     */
+    
     public function setHafalanTuntas(int $dataHafalanId): void
     {
         $santriId = $this->data['santri_id'] ?? null;
 
-        // Hanya bisa centang pada tahun ajaran aktif
+        
         $tahunAjaran = TahunAjaran::getAktif();
 
         if (!$santriId || !$tahunAjaran) {
@@ -289,7 +283,7 @@ class InputHafalan extends Page implements HasForms
             return;
         }
 
-        // Pastikan sedang di tahun ajaran aktif
+        
         if ($this->selectedTahunAjaranId !== $tahunAjaran->id) {
             Notification::make()
                 ->title('Tidak bisa mengubah data')
@@ -302,11 +296,11 @@ class InputHafalan extends Page implements HasForms
         $santri = bukuinduk::find($santriId);
         if (!$santri) return;
 
-        // Cek item yang ditoggle
+        
         $targetHafalan = DataHafalan::find($dataHafalanId);
         if (!$targetHafalan) return;
 
-        // Cek apakah sudah ada
+        
         $existing = HafalanSantri::where('santri_id', $santriId)
             ->where('data_hafalan_id', $dataHafalanId)
             ->where('tahun_ajaran_id', $tahunAjaran->id)
@@ -320,14 +314,14 @@ class InputHafalan extends Page implements HasForms
             return;
         }
 
-        // VALIDASI: Jika memilih Sunnah atau Wisuda, pastikan semua yang Wajib di kelas tersebut sudah selesai (tercentang)
+        
         if (in_array($targetHafalan->kriteria, ['Sunnah', 'Wisuda'])) {
             $allWajibIds = collect($this->hafalanList)
                 ->where('kriteria', 'Wajib')
                 ->pluck('id')
                 ->toArray();
 
-            // Check if all Wajib IDs exist in $this->hafalanChecked
+            
             $completedWajibCount = count(array_intersect($allWajibIds, $this->hafalanChecked));
             $totalWajibCount = count($allWajibIds);
 
@@ -341,7 +335,7 @@ class InputHafalan extends Page implements HasForms
             }
         }
 
-        // Check: simpan record baru beserta data historis
+        
         HafalanSantri::create([
             'santri_id' => $santriId,
             'data_hafalan_id' => $dataHafalanId,
@@ -359,18 +353,16 @@ class InputHafalan extends Page implements HasForms
             ->success()
             ->send();
 
-        // RELOAD STATE
+        
         $this->loadHafalanSantri($santri);
     }
 
-    /**
-     * Batalkan hafalan tuntas (uncek) — hanya untuk admin
-     */
+    
     public function batalkanHafalan(int $dataHafalanId): void
     {
         $santriId = $this->data['santri_id'] ?? null;
 
-        // Hanya bisa uncek pada tahun ajaran aktif
+        
         $tahunAjaran = TahunAjaran::getAktif();
 
         if (!$santriId || !$tahunAjaran) {
@@ -381,7 +373,7 @@ class InputHafalan extends Page implements HasForms
             return;
         }
 
-        // Pastikan sedang di tahun ajaran aktif
+        
         if ($this->selectedTahunAjaranId !== $tahunAjaran->id) {
             Notification::make()
                 ->title('Tidak bisa mengubah data')
@@ -414,13 +406,11 @@ class InputHafalan extends Page implements HasForms
             ->warning()
             ->send();
 
-        // RELOAD STATE
+        
         $this->loadHafalanSantri($santri);
     }
 
-    /**
-     * Toggle mode uncek
-     */
+    
     public function toggleUncekMode(): void
     {
         $this->uncekMode = !$this->uncekMode;

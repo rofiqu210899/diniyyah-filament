@@ -34,19 +34,19 @@ class RekapHafalan extends Page implements HasForms
 
     public ?array $data = [];
 
-    /** Data hasil rekap untuk tabel */
+    
     public array $hasilRekap = [];
 
-    /** Header kolom hafalan */
+    
     public array $headerHafalan = [];
 
-    /** Kontrol tampilan card hasil */
+    
     public bool $showHasil = false;
 
-    /** Label info filter yang sedang aktif */
+    
     public string $filterLabel = '';
 
-    /** Jenis pendidikan yang sedang aktif (untuk conditional Blade) */
+    
     public string $jenisPendidikan = '';
 
     public function mount(): void
@@ -87,7 +87,7 @@ class RekapHafalan extends Page implements HasForms
                             ->required()
                             ->live()
                             ->afterStateUpdated(function (Set $set) {
-                                // Reset field terkait saat jenis pendidikan berubah
+                                
                                 $set('unit_id', null);
                                 $set('jurusan_id', null);
                                 $set('kelas_id', null);
@@ -100,9 +100,9 @@ class RekapHafalan extends Page implements HasForms
                             })
                             ->columnSpan(1),
 
-                        // ========================================
-                        // FILTER KURIKULUM
-                        // ========================================
+                        
+                        
+                        
 
                         Select::make('unit_id')
                             ->label('Unit')
@@ -165,12 +165,12 @@ class RekapHafalan extends Page implements HasForms
                                 $unitId = (int) $get('unit_id');
                                 if (!$unitId) return [];
 
-                                // Unit 1, 2, 3, 20, 21 → A-Z
+                                
                                 if (in_array($unitId, [1, 2, 3, 20, 21])) {
                                     return array_combine(range('A', 'Z'), range('A', 'Z'));
                                 }
 
-                                // Unit 4, 5, 6 → 1-10
+                                
                                 if (in_array($unitId, [4, 5, 6])) {
                                     $nums = range(1, 10);
                                     return array_combine($nums, $nums);
@@ -184,14 +184,14 @@ class RekapHafalan extends Page implements HasForms
                                 if ($get('jenis_pendidikan') !== 'kurikulum') return false;
                                 $unitId = (int) $get('unit_id');
                                 if (!$unitId) return false;
-                                // Unit 7, 18, 19, 22 → tidak ada bagian
+                                
                                 return !in_array($unitId, [7, 18, 19, 22]);
                             })
                             ->columnSpan(1),
 
-                        // ========================================
-                        // FILTER MADIN
-                        // ========================================
+                        
+                        
+                        
 
                         Select::make('madin_mkls')
                             ->label('Kelas Madin')
@@ -218,7 +218,7 @@ class RekapHafalan extends Page implements HasForms
                         Select::make('madin_tkt')
                             ->label('Jenjang / Tingkat')
                             ->options(
-                                Madin::whereNotIn('id', [4, 5, 6]) // exclude non-standard
+                                Madin::whereNotIn('id', [4, 5, 6]) 
                                     ->pluck('madin', 'id')
                             )
                             ->searchable()
@@ -242,9 +242,7 @@ class RekapHafalan extends Page implements HasForms
             ]);
     }
 
-    /**
-     * Cari dan tampilkan data rekap hafalan
-     */
+    
     public function cariRekap(): void
     {
         $this->validate();
@@ -270,11 +268,7 @@ class RekapHafalan extends Page implements HasForms
         }
     }
 
-    /**
-     * Rekap mode Kurikulum:
-     * Filter santri berdasarkan unit + kelas kurikulum dari snapshot hafalan_santris
-     * + combine dari bukuinduk untuk santri tanpa setoran.
-     */
+    
     protected function cariRekapKurikulum(int $tahunAjaranId): void
     {
         $unitId = $this->data['unit_id'] ?? null;
@@ -291,7 +285,7 @@ class RekapHafalan extends Page implements HasForms
             return;
         }
 
-        // 1. Ambil santri yang sudah punya setoran di tahun ajaran ini (snapshot historis)
+        
         $hafalanQuery = HafalanSantri::where('tahun_ajaran_id', $tahunAjaranId)
             ->where('unit', $unitId)
             ->where('kls', $kelasId);
@@ -301,7 +295,7 @@ class RekapHafalan extends Page implements HasForms
             ->pluck('santri_id')
             ->toArray();
 
-        // 2. Ambil santri dari bukuinduk yang belum punya setoran tapi masuk kelas ini
+        
         $bukuindukQuery = bukuinduk::with(['Funkelas', 'unitSekolah'])
             ->where('unit', $unitId)
             ->where('kls', $kelasId)
@@ -318,10 +312,10 @@ class RekapHafalan extends Page implements HasForms
             ->whereNotIn('id', $santriIdsFromHafalan)
             ->get();
 
-        // 3. Ambil data lengkap santri dari hafalan
+        
         $santriDariHafalan = bukuinduk::with(['Funkelas', 'unitSekolah'])->whereIn('id', $santriIdsFromHafalan)->get();
 
-        // Jika jurusan/bagian dipilih, filter santri dari hafalan juga
+        
         if ($jurusanId) {
             $santriDariHafalan = $santriDariHafalan->filter(fn($s) => $s->jur == $jurusanId);
         }
@@ -329,7 +323,7 @@ class RekapHafalan extends Page implements HasForms
             $santriDariHafalan = $santriDariHafalan->filter(fn($s) => $s->bag == $bagian);
         }
 
-        // 4. Gabungkan
+        
         $semuaSantri = $santriDariHafalan->merge($santriDariBukuinduk)->unique('id')->sortBy('nm');
 
         if ($semuaSantri->isEmpty()) {
@@ -345,16 +339,12 @@ class RekapHafalan extends Page implements HasForms
             return;
         }
 
-        // 5. Ambil data hafalan berdasarkan capaian tertinggi santri
+        
         $this->buildHeaderAndResult($semuaSantri, $tahunAjaranId);
         $this->buildFilterLabel();
     }
 
-    /**
-     * Rekap mode Madin:
-     * Filter santri berdasarkan mkls, mbag, tkt dari bukuinduk
-     * + combine dari hafalan_santris historis
-     */
+    
     protected function cariRekapMadin(int $tahunAjaranId): void
     {
         $mkls = $this->data['madin_mkls'] ?? null;
@@ -371,7 +361,7 @@ class RekapHafalan extends Page implements HasForms
             return;
         }
 
-        // 1. Santri dari bukuinduk (kelas terkini)
+        
         $santriDariBukuinduk = bukuinduk::with(['Funkelas', 'unitSekolah'])
             ->where('mkls', $mkls)
             ->where('mbag', $mbag)
@@ -381,10 +371,10 @@ class RekapHafalan extends Page implements HasForms
 
         $santriIdsDariBukuinduk = $santriDariBukuinduk->pluck('id')->toArray();
 
-        // 2. Santri yang pernah setor di kelas ini (historis) tapi sudah pindah
-        //    ke tingkat/kelas BERBEDA (bukan sekedar pindah bagian dalam mkls/tkt yang sama).
-        //    Santri yang masih di mkls+tkt sama tapi beda mbag (misal G→H)
-        //    hanya muncul di bagian terbaru mereka (dari bukuinduk).
+        
+        
+        
+        
         $santriIdsInSameMklsTkt = bukuinduk::where('mkls', $mkls)
             ->where('tkt', $tkt)
             ->where('jk', $jk)
@@ -401,7 +391,7 @@ class RekapHafalan extends Page implements HasForms
 
         $santriDariHafalan = bukuinduk::with(['Funkelas', 'unitSekolah'])->whereIn('id', $santriIdsFromHafalan)->get();
 
-        // 3. Gabungkan
+        
         $semuaSantri = $santriDariBukuinduk->merge($santriDariHafalan)->unique('id')->sortBy('nm');
 
         if ($semuaSantri->isEmpty()) {
@@ -417,14 +407,14 @@ class RekapHafalan extends Page implements HasForms
             return;
         }
 
-        // 4. Ambil data hafalan berdasarkan capaian tertinggi santri
+        
         $this->buildHeaderAndResult($semuaSantri, $tahunAjaranId);
         $this->buildFilterLabel();
     }
 
     protected function buildHeaderAndResult($semuaSantri, int $tahunAjaranId): void
     {
-        // Ambil semua pencapaian hafalan santri sekaligus (avoid N+1)
+        
         $santriIds = $semuaSantri->pluck('id')->toArray();
         
         $hafalanQuery = HafalanSantri::whereIn('santri_id', $santriIds);
@@ -437,15 +427,15 @@ class RekapHafalan extends Page implements HasForms
         $hafalanTuntas = $hafalanQuery->get()->groupBy('santri_id');
 
         if ($this->jenisPendidikan === 'madin') {
-            // Jika filter Madin, sesuaikan header dengan tingkat diniyyah yang dipilih
+            
             $maxTkt = (int) ($this->data['madin_tkt'] ?? 1);
             $maxMkls = (int) ($this->data['madin_mkls'] ?? 1);
         } else {
-            // Cari capaian tertinggi (max tkt dan max mkls) secara dinamis untuk kurikulum
+            
             $maxTkt = 1;
             $maxMkls = 1;
 
-            // 1. Dari data kelas berjalan santri (bukuinduk)
+            
             foreach ($semuaSantri as $santri) {
                 $sTkt = (int) $santri->tkt;
                 $sMkls = (int) $santri->mkls;
@@ -460,7 +450,7 @@ class RekapHafalan extends Page implements HasForms
                 }
             }
 
-            // 2. Dari data historis setoran hafalan santri
+            
             foreach ($hafalanTuntas as $sId => $setorans) {
                 foreach ($setorans as $setoran) {
                     $hTkt = (int) $setoran->tkt;
@@ -478,7 +468,7 @@ class RekapHafalan extends Page implements HasForms
             }
         }
 
-        // Ambil semua data hafalan berdasarkan capaian
+        
         $dataHafalanQuery = DataHafalan::query();
         if ($this->jenisPendidikan === 'madin') {
             $dataHafalanQuery->where('tkt', $maxTkt)
@@ -495,7 +485,7 @@ class RekapHafalan extends Page implements HasForms
         $dataHafalan = $dataHafalanQuery
             ->orderBy('tkt')
             ->orderBy('mkls')
-            ->orderBy('kriteria') // Wajib dulu
+            ->orderBy('kriteria') 
             ->orderBy('nama_hafalan')
             ->get();
 
@@ -511,10 +501,10 @@ class RekapHafalan extends Page implements HasForms
             ];
         })->toArray();
 
-        // Eager-load relasi madin untuk label
+        
         $madinCache = Madin::pluck('madin', 'id')->toArray();
 
-        // Build data tabel
+        
         $this->hasilRekap = $semuaSantri->values()->map(function ($santri) use ($hafalanTuntas, $dataHafalan, $madinCache) {
             $tuntasIds = [];
             if (isset($hafalanTuntas[$santri->id])) {
@@ -526,10 +516,10 @@ class RekapHafalan extends Page implements HasForms
                 $hafalanStatus[$hafalan->id] = in_array($hafalan->id, $tuntasIds);
             }
 
-            // Build madin label: "2 G Ula"
+            
             $madinLabel = $santri->mkls . ' ' . ($santri->mbag ?? '') . ' ' . ($madinCache[$santri->tkt] ?? '-');
 
-            // Build kurikulum label: "X A SMA"
+            
             $unitName = $santri->unitSekolah?->unit ?? '';
             $kelasName = $santri->Funkelas?->nmkls ?? '';
             $bagName = $santri->bag ?? '';
@@ -552,9 +542,7 @@ class RekapHafalan extends Page implements HasForms
         $this->showHasil = true;
     }
 
-    /**
-     * Build label filter aktif untuk ditampilkan di header card hasil
-     */
+    
     protected function buildFilterLabel(): void
     {
         $tahunAjaran = TahunAjaran::find($this->data['tahun_ajaran_id'] ?? 0);
@@ -590,9 +578,7 @@ class RekapHafalan extends Page implements HasForms
         $this->filterLabel = $label;
     }
 
-    /**
-     * Download current table report to Excel
-     */
+    
     public function downloadExcel()
     {
         if (empty($this->hasilRekap)) {

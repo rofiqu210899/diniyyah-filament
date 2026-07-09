@@ -26,7 +26,8 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->login()
+            ->brandName('MADINA BLOKAGUNG')
+            ->login(\App\Filament\Pages\Auth\CustomLogin::class)
             ->colors([
                 'primary' => '#198754',
             ])

@@ -26,7 +26,10 @@
                 <th style="border: 1px solid #000000; font-weight: bold; text-align: left; background-color: #1F4E78; color: #FFFFFF; vertical-align: middle;">Kurikulum</th>
             @endif
             @foreach($headerHafalan as $hafalan)
-                <th style="border: 1px solid #000000; font-weight: bold; text-align: center; background-color: {{ $hafalan['kriteria'] === 'Wajib' ? '#FCE4D6' : ($hafalan['kriteria'] === 'Sunnah' ? '#E2EFDA' : '#FFF2CC') }}; color: #000000; vertical-align: middle;">
+                @php
+                    $bgColor = $hafalan['kriteria'] === 'Wajib' ? '#FCE4D6' : ($hafalan['kriteria'] === 'Sunnah' ? '#E2EFDA' : '#FFF2CC');
+                @endphp
+                <th style="{{ 'border: 1px solid #000000; font-weight: bold; text-align: center; background-color: ' . $bgColor . '; color: #000000; vertical-align: middle;' }}">
                     {{ $hafalan['tkt_label'] }} K{{ $hafalan['mkls'] }} - {{ $hafalan['nama_hafalan'] }} ({{ $hafalan['kriteria'] }})
                 </th>
             @endforeach
@@ -44,8 +47,13 @@
                     <td style="border: 1px solid #BFBFBF; text-align: left; vertical-align: middle;">{{ $row['kurikulum_label'] ?? '-' }}</td>
                 @endif
                 @foreach($headerHafalan as $hafalan)
-                    <td style="border: 1px solid #BFBFBF; text-align: center; vertical-align: middle; color: {{ ($row['hafalan'][$hafalan['id']] ?? false) ? '#10B981' : '#6B7280' }}; font-weight: {{ ($row['hafalan'][$hafalan['id']] ?? false) ? 'bold' : 'normal' }};">
-                        @if($row['hafalan'][$hafalan['id']] ?? false)
+                    @php
+                        $isHafal = $row['hafalan'][$hafalan['id']] ?? false;
+                        $cellColor = $isHafal ? '#10B981' : '#6B7280';
+                        $cellWeight = $isHafal ? 'bold' : 'normal';
+                    @endphp
+                    <td style="{{ 'border: 1px solid #BFBFBF; text-align: center; vertical-align: middle; color: ' . $cellColor . '; font-weight: ' . $cellWeight . ';' }}">
+                        @if($isHafal)
                             ✓
                         @else
                             -

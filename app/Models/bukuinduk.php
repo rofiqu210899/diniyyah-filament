@@ -11,6 +11,13 @@ class bukuinduk extends Model
     protected $table = 'bukuinduk';
     protected $guarded = [];
 
+    protected static function booted()
+    {
+        static::addGlobalScope('active', function ($builder) {
+            $builder->where('deleted', 0);
+        });
+    }
+
     public function madin()
     {
         return $this->belongsTo(Madin::class, 'tkt', 'id');

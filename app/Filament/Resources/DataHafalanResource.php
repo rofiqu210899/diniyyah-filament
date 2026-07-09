@@ -25,7 +25,6 @@ class DataHafalanResource extends Resource
 
     protected static ?string $navigationGroup = 'Pengaturan';
 
-
     public static function form(Form $form): Form
     {
         return $form
@@ -161,7 +160,7 @@ class DataHafalanResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            
         ];
     }
 

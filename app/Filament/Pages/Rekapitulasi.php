@@ -58,9 +58,7 @@ class Rekapitulasi extends Page implements HasForms
 
     protected function getActions(): array
     {
-        return [
-            $this->previewAction(),
-        ];
+        return [];
     }
 
     public function openPreview(): void
@@ -101,9 +99,7 @@ class Rekapitulasi extends Page implements HasForms
             });
     }
 
-    /**
-     * Unduh laporan rekapitulasi per tingkatan secara langsung
-     */
+    
     public function downloadRekapPertingkatanDirect()
     {
         $tahunAjaranId = $this->data['tahun_ajaran_id'];

@@ -32,7 +32,7 @@ class HafalanSantriResource extends Resource
     {
         return $form
             ->schema([
-                //
+                
             ]);
     }
 
@@ -87,7 +87,7 @@ class HafalanSantriResource extends Resource
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
-                // Filter Tanggal Input (Rentang)
+                
                 Tables\Filters\Filter::make('created_at')
                     ->label('Tanggal Input')
                     ->form([
@@ -120,14 +120,14 @@ class HafalanSantriResource extends Resource
                         return $indicators;
                     }),
 
-                // Filter Jenjang
+                
                 Tables\Filters\SelectFilter::make('tkt')
                     ->label('Jenjang')
                     ->options(
                         Madin::pluck('madin', 'id')
                     ),
 
-                // Filter Kelas
+                
                 Tables\Filters\SelectFilter::make('mkls')
                     ->label('Kelas')
                     ->options([
@@ -139,7 +139,7 @@ class HafalanSantriResource extends Resource
                         6 => 'Kelas 6',
                     ]),
 
-                // Filter Tahun Ajaran (Default: Aktif)
+                
                 Tables\Filters\SelectFilter::make('tahun_ajaran_id')
                     ->label('Tahun Ajaran')
                     ->options(
@@ -167,7 +167,7 @@ class HafalanSantriResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            
         ];
     }
 
