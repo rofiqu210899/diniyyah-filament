@@ -473,14 +473,21 @@ class RekapHafalan extends Page implements HasForms
             }
         }
 
-        // Ambil semua data hafalan berdasarkan capaian tertinggi
-        $dataHafalan = DataHafalan::where(function ($query) use ($maxTkt, $maxMkls) {
-            $query->where('tkt', '<', $maxTkt)
-                ->orWhere(function ($q) use ($maxTkt, $maxMkls) {
-                    $q->where('tkt', $maxTkt)
-                        ->where('mkls', '<=', $maxMkls);
-                });
-        })
+        // Ambil semua data hafalan berdasarkan capaian
+        $dataHafalanQuery = DataHafalan::query();
+        if ($this->jenisPendidikan === 'madin') {
+            $dataHafalanQuery->where('tkt', $maxTkt)
+                ->where('mkls', $maxMkls);
+        } else {
+            $dataHafalanQuery->where(function ($query) use ($maxTkt, $maxMkls) {
+                $query->where('tkt', '<', $maxTkt)
+                    ->orWhere(function ($q) use ($maxTkt, $maxMkls) {
+                        $q->where('tkt', $maxTkt)
+                            ->where('mkls', '<=', $maxMkls);
+                    });
+            });
+        }
+        $dataHafalan = $dataHafalanQuery
             ->orderBy('tkt')
             ->orderBy('mkls')
             ->orderBy('kriteria') // Wajib dulu
