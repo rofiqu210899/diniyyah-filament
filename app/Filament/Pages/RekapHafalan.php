@@ -426,10 +426,15 @@ class RekapHafalan extends Page implements HasForms
     {
         // Ambil semua pencapaian hafalan santri sekaligus (avoid N+1)
         $santriIds = $semuaSantri->pluck('id')->toArray();
-        $hafalanTuntas = HafalanSantri::where('tahun_ajaran_id', $tahunAjaranId)
-            ->whereIn('santri_id', $santriIds)
-            ->get()
-            ->groupBy('santri_id');
+        
+        $hafalanQuery = HafalanSantri::whereIn('santri_id', $santriIds);
+        if ($this->jenisPendidikan === 'kurikulum') {
+            $hafalanQuery->where('tahun_ajaran_id', '<=', $tahunAjaranId);
+        } else {
+            $hafalanQuery->where('tahun_ajaran_id', $tahunAjaranId);
+        }
+
+        $hafalanTuntas = $hafalanQuery->get()->groupBy('santri_id');
 
         if ($this->jenisPendidikan === 'madin') {
             // Jika filter Madin, sesuaikan header dengan tingkat diniyyah yang dipilih
