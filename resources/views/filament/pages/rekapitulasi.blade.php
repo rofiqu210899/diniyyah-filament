@@ -4,13 +4,13 @@
 
         <div class="flex flex-wrap items-center gap-4">
             <x-filament::button 
-                wire:click="downloadRekapPertingkatan" 
-                icon="heroicon-m-document-arrow-down" 
+                wire:click="openPreview" 
+                icon="heroicon-m-eye" 
                 size="lg"
                 color="primary"
                 class="shadow-sm transition hover:scale-[1.01]"
             >
-                Unduh Rekap Per Tingkatan (Excel)
+                Preview & Unduh Rekap Per Tingkatan
             </x-filament::button>
             
             <x-filament::button 

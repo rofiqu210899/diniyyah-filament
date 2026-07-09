@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Exports\RekapPertingkatanExport;
+use App\Exports\RekapPertingkatanSheet;
 use App\Models\TahunAjaran;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
@@ -55,13 +56,56 @@ class Rekapitulasi extends Page implements HasForms
             ]);
     }
 
-    /**
-     * Unduh laporan rekapitulasi per tingkatan
-     */
-    public function downloadRekapPertingkatan()
+    protected function getActions(): array
+    {
+        return [
+            $this->previewAction(),
+        ];
+    }
+
+    public function openPreview(): void
     {
         $this->validate();
+        $this->mountAction('preview');
+    }
 
+    public function getPreviewData($tahunAjaranId): array
+    {
+        $ula = (new RekapPertingkatanSheet($tahunAjaranId, 1, 'ULA'))->getData();
+        $wustho = (new RekapPertingkatanSheet($tahunAjaranId, 2, 'WUSTHO'))->getData();
+        $ulya = (new RekapPertingkatanSheet($tahunAjaranId, 3, 'ULYA'))->getData();
+
+        return [
+            'ula' => $ula,
+            'wustho' => $wustho,
+            'ulya' => $ulya,
+        ];
+    }
+
+    public function previewAction(): \Filament\Actions\Action
+    {
+        return \Filament\Actions\Action::make('preview')
+            ->modalHeading('Pratinjau Rekapitulasi Ahad Legi')
+            ->modalWidth('7xl')
+            ->modalContent(function () {
+                $tahunAjaranId = $this->data['tahun_ajaran_id'] ?? null;
+                if (!$tahunAjaranId) return null;
+
+                $previewData = $this->getPreviewData($tahunAjaranId);
+                return view('filament.pages.rekapitulasi-preview-modal', $previewData);
+            })
+            ->modalSubmitActionLabel('Unduh Excel')
+            ->modalCancelActionLabel('Tutup')
+            ->action(function () {
+                return $this->downloadRekapPertingkatanDirect();
+            });
+    }
+
+    /**
+     * Unduh laporan rekapitulasi per tingkatan secara langsung
+     */
+    public function downloadRekapPertingkatanDirect()
+    {
         $tahunAjaranId = $this->data['tahun_ajaran_id'];
         $tahunAjaran = TahunAjaran::find($tahunAjaranId);
 

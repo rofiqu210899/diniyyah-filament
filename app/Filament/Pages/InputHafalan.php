@@ -320,8 +320,8 @@ class InputHafalan extends Page implements HasForms
             return;
         }
 
-        // VALIDASI: Jika memilih Sunnah, pastikan semua yang Wajib di kelas tersebut sudah selesai (tercentang)
-        if ($targetHafalan->kriteria === 'Sunnah') {
+        // VALIDASI: Jika memilih Sunnah atau Wisuda, pastikan semua yang Wajib di kelas tersebut sudah selesai (tercentang)
+        if (in_array($targetHafalan->kriteria, ['Sunnah', 'Wisuda'])) {
             $allWajibIds = collect($this->hafalanList)
                 ->where('kriteria', 'Wajib')
                 ->pluck('id')

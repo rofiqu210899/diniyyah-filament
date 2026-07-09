@@ -30,7 +30,7 @@ class RekapPertingkatanSheet implements FromView, WithTitle, ShouldAutoSize
         return $this->tktName;
     }
 
-    public function view(): View
+    public function getData(): array
     {
         // 1. Ambil data tahun ajaran
         $tahunAjaran = TahunAjaran::find($this->tahunAjaranId);
@@ -45,12 +45,34 @@ class RekapPertingkatanSheet implements FromView, WithTitle, ShouldAutoSize
             ->orderBy('jk')
             ->get();
 
-        // 3. Ambil daftar hafalan untuk tingkatan ini
+        // 3. Ambil daftar hafalan untuk tingkatan ini dan urutkan Wajib di paling kiri (terlebih dahulu)
         $hafalans = DataHafalan::where('tkt', $this->tktId)
-            ->orderBy('mkls')
-            ->orderBy('kriteria', 'desc') // Wajib dulu
-            ->orderBy('id')
-            ->get();
+            ->get()
+            ->sort(function ($a, $b) {
+                // Urutkan berdasarkan mkls terkecil ke terbesar
+                if ($a->mkls != $b->mkls) {
+                    return $a->mkls <=> $b->mkls;
+                }
+                // Urutkan berdasarkan kriteria: Wajib (1) dulu, Sunnah (2), Wisuda (3)
+                $aOrder = match ($a->kriteria) {
+                    'Wajib' => 1,
+                    'Sunnah' => 2,
+                    'Wisuda' => 3,
+                    default => 4,
+                };
+                $bOrder = match ($b->kriteria) {
+                    'Wajib' => 1,
+                    'Sunnah' => 2,
+                    'Wisuda' => 3,
+                    default => 4,
+                };
+                if ($aOrder != $bOrder) {
+                    return $aOrder <=> $bOrder;
+                }
+                // Urutkan berdasarkan id
+                return $a->id <=> $b->id;
+            })
+            ->values();
 
         // ==========================================
         // OPTIMASI QUERY (MENCEGAH N+1)
@@ -115,37 +137,34 @@ class RekapPertingkatanSheet implements FromView, WithTitle, ShouldAutoSize
             // Statistik: Rata-rata
             $rataRata = $jumlahSantri > 0 ? round($totalCompletedForClass / $jumlahSantri, 2) : 0;
 
-            // Statistik: Point Wajib (Jumlah santri yang tuntas semua hafalan wajib)
+            // Statistik: Wajib (Jumlah & Prosentase)
             $wajibHafalanIds = $classHafalans->where('kriteria', 'Wajib')->pluck('id')->toArray();
-            $pointWajib = 0;
-            if (count($wajibHafalanIds) > 0) {
-                foreach ($students as $student) {
-                    $completedIds = $hafalanRecordsGrouped->get($student->id, collect())
-                        ->pluck('data_hafalan_id')
-                        ->all();
-                    $intersect = array_intersect($wajibHafalanIds, $completedIds);
-                    if (count($intersect) === count($wajibHafalanIds)) {
-                        $pointWajib++;
-                    }
-                }
+            $wajibCompletedCount = 0;
+            foreach ($wajibHafalanIds as $id) {
+                $wajibCompletedCount += $hafalanCompletions[$id] ?? 0;
             }
+            $wajibPotential = count($wajibHafalanIds) * $jumlahSantri;
+            $wajibProsentase = $wajibPotential > 0 ? round(($wajibCompletedCount / $wajibPotential) * 100, 2) : 0;
 
-            // Statistik: Poin Sunnah (Jumlah santri yang menghafal minimal 1 hafalan sunnah)
+            // Statistik: Sunnah (Jumlah & Prosentase)
             $sunnahHafalanIds = $classHafalans->where('kriteria', 'Sunnah')->pluck('id')->toArray();
-            $poinSunnah = 0;
-            if (count($sunnahHafalanIds) > 0) {
-                foreach ($students as $student) {
-                    $completedIds = $hafalanRecordsGrouped->get($student->id, collect())
-                        ->pluck('data_hafalan_id')
-                        ->all();
-                    $intersect = array_intersect($sunnahHafalanIds, $completedIds);
-                    if (count($intersect) > 0) {
-                        $poinSunnah++;
-                    }
-                }
+            $sunnahCompletedCount = 0;
+            foreach ($sunnahHafalanIds as $id) {
+                $sunnahCompletedCount += $hafalanCompletions[$id] ?? 0;
             }
+            $sunnahPotential = count($sunnahHafalanIds) * $jumlahSantri;
+            $sunnahProsentase = $sunnahPotential > 0 ? round(($sunnahCompletedCount / $sunnahPotential) * 100, 2) : 0;
 
-            // Statistik: Prosentase Progres
+            // Statistik: Wisuda (Jumlah & Prosentase)
+            $wisudaHafalanIds = $classHafalans->where('kriteria', 'Wisuda')->pluck('id')->toArray();
+            $wisudaCompletedCount = 0;
+            foreach ($wisudaHafalanIds as $id) {
+                $wisudaCompletedCount += $hafalanCompletions[$id] ?? 0;
+            }
+            $wisudaPotential = count($wisudaHafalanIds) * $jumlahSantri;
+            $wisudaProsentase = $wisudaPotential > 0 ? round(($wisudaCompletedCount / $wisudaPotential) * 100, 2) : 0;
+
+            // Statistik: Prosentase Progres Total
             $prosentase = 0;
             $totalPotential = count($classHafalanIds) * $jumlahSantri;
             if ($totalPotential > 0) {
@@ -155,23 +174,32 @@ class RekapPertingkatanSheet implements FromView, WithTitle, ShouldAutoSize
             // Tambahkan ke grup kelas
             $rowsGroupedByGrade[$class->mkls][] = [
                 'class' => $class,
-                'kelas_label' => "{$class->mkls} {$class->mbag} {$this->tktName}",
+                'kelas_label' => "{$class->mkls}{$class->mbag} {$this->tktName}",
                 'jk_label' => $class->jk == 1 ? 'Putra' : 'Putri',
                 'mustahiq' => $class->nama_mustahiq ?? '-',
                 'jumlah' => $jumlahSantri,
                 'hafalan_completions' => $hafalanCompletions,
                 'rata_rata' => $rataRata,
-                'point_wajib' => $pointWajib,
-                'poin_sunnah' => $poinSunnah,
+                'wajib_jumlah' => $wajibCompletedCount,
+                'wajib_prosentase' => $wajibProsentase,
+                'sunnah_jumlah' => $sunnahCompletedCount,
+                'sunnah_prosentase' => $sunnahProsentase,
+                'wisuda_jumlah' => $wisudaCompletedCount,
+                'wisuda_prosentase' => $wisudaProsentase,
                 'prosentase' => $prosentase,
             ];
         }
 
-        return view('exports.rekap-pertingkatan', [
+        return [
             'tktName' => $this->tktName,
             'tahunAjaran' => $tahunAjaranLabel,
             'hafalansGroupedByGrade' => $hafalans->groupBy('mkls'),
             'rowsGroupedByGrade' => $rowsGroupedByGrade,
-        ]);
+        ];
+    }
+
+    public function view(): View
+    {
+        return view('exports.rekap-pertingkatan', $this->getData());
     }
 }

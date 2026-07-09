@@ -156,7 +156,15 @@ $wajibSelesai = $totalWajibCount > 0 ? $completedWajibCount >= $totalWajibCount 
                             </td>
                             <td class="fi-ta-cell p-0 {{ !($this->uncekMode && $isAktifSelected) ? 'last-of-type:pe-1 sm:last-of-type:pe-6' : '' }} whitespace-nowrap w-1">
                                 <div class="px-3 py-4">
-                                    <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset {{ $isWajib ? 'bg-red-50 text-red-700 ring-red-600/10 dark:bg-red-500/10 dark:text-red-400 dark:ring-red-500/20' : 'bg-blue-50 text-blue-700 ring-blue-600/10 dark:bg-blue-500/10 dark:text-blue-400 dark:ring-blue-500/20' }}">
+                                    @php
+                                        $badgeClass = match($hafalan['kriteria']) {
+                                            'Wajib' => 'bg-red-50 text-red-700 ring-red-600/10 dark:bg-red-500/10 dark:text-red-400 dark:ring-red-500/20',
+                                            'Sunnah' => 'bg-blue-50 text-blue-700 ring-blue-600/10 dark:bg-blue-500/10 dark:text-blue-400 dark:ring-blue-500/20',
+                                            'Wisuda' => 'bg-amber-50 text-amber-700 ring-amber-600/10 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/20',
+                                            default => 'bg-gray-50 text-gray-700 ring-gray-600/10 dark:bg-gray-500/10 dark:text-gray-400 dark:ring-gray-500/20',
+                                        };
+                                    @endphp
+                                    <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset {{ $badgeClass }}">
                                         {{ $hafalan['kriteria'] }}
                                     </span>
                                 </div>

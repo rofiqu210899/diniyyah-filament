@@ -67,6 +67,7 @@ class DataHafalanResource extends Resource
                             ->options([
                                 'Wajib' => 'Wajib',
                                 'Sunnah' => 'Sunnah',
+                                'Wisuda' => 'Wisuda',
                             ])
                             ->default('Wajib')
                             ->required(),
@@ -106,6 +107,8 @@ class DataHafalanResource extends Resource
                     ->color(fn(string $state): string => match ($state) {
                         'Wajib' => 'danger',
                         'Sunnah' => 'success',
+                        'Wisuda' => 'warning',
+                        default => 'gray',
                     }),
 
                 Tables\Columns\TextColumn::make('keterangan')
@@ -143,6 +146,7 @@ class DataHafalanResource extends Resource
                     ->options([
                         'Wajib' => 'Wajib',
                         'Sunnah' => 'Sunnah',
+                        'Wisuda' => 'Wisuda',
                     ]),
 
             ])

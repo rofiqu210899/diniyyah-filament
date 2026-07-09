@@ -24,7 +24,7 @@
                 <th style="border: 1px solid #000000; font-weight: bold; text-align: left; background-color: #1F4E78; color: #FFFFFF; vertical-align: middle;">Madin</th>
             @endif
             @foreach($headerHafalan as $hafalan)
-                <th style="border: 1px solid #000000; font-weight: bold; text-align: center; background-color: {{ $hafalan['kriteria'] === 'Wajib' ? '#FCE4D6' : '#E2EFDA' }}; color: #000000; vertical-align: middle;">
+                <th style="border: 1px solid #000000; font-weight: bold; text-align: center; background-color: {{ $hafalan['kriteria'] === 'Wajib' ? '#FCE4D6' : ($hafalan['kriteria'] === 'Sunnah' ? '#E2EFDA' : '#FFF2CC') }}; color: #000000; vertical-align: middle;">
                     {{ $hafalan['tkt_label'] }} K{{ $hafalan['mkls'] }} - {{ $hafalan['nama_hafalan'] }} ({{ $hafalan['kriteria'] }})
                 </th>
             @endforeach

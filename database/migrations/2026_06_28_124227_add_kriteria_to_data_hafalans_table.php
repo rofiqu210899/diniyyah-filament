@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('data_hafalans', function (Blueprint $table) {
-            $table->enum('kriteria', ['Wajib', 'Sunnah'])->default('Wajib')->after('nama_hafalan');
+            $table->enum('kriteria', ['Wajib', 'Sunnah', 'Wisuda'])->default('Wajib')->after('nama_hafalan');
         });
     }
 

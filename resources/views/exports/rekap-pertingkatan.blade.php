@@ -20,7 +20,7 @@
 @foreach($rowsGroupedByGrade as $mkls => $classList)
     @php
         $classHafalans = $hafalansGroupedByGrade->get($mkls, collect());
-        $colCount = 9 + $classHafalans->count();
+        $colCount = 13 + $classHafalans->count();
     @endphp
     
     <table>
@@ -33,23 +33,34 @@
             </tr>
             <!-- Header Kolom Tabel Kelas Kelompok -->
             <tr style="background-color: #1F4E78; color: #FFFFFF; font-weight: bold; text-align: center; border: 1px solid #000000;">
-                <th style="border: 1px solid #000000; font-weight: bold; text-align: center; background-color: #1F4E78; color: #FFFFFF; vertical-align: middle;">No</th>
-                <th style="border: 1px solid #000000; font-weight: bold; text-align: center; background-color: #1F4E78; color: #FFFFFF; vertical-align: middle;">Kelas</th>
-                <th style="border: 1px solid #000000; font-weight: bold; text-align: center; background-color: #1F4E78; color: #FFFFFF; vertical-align: middle;">Jenis Kelamin</th>
-                <th style="border: 1px solid #000000; font-weight: bold; text-align: center; background-color: #1F4E78; color: #FFFFFF; vertical-align: middle;">Nama Mustahiq</th>
-                <th style="border: 1px solid #000000; font-weight: bold; text-align: center; background-color: #1F4E78; color: #FFFFFF; vertical-align: middle;">Jumlah Santri</th>
+                <th rowspan="2" style="border: 1px solid #000000; font-weight: bold; text-align: center; background-color: #1F4E78; color: #FFFFFF; vertical-align: middle;">No</th>
+                <th rowspan="2" style="border: 1px solid #000000; font-weight: bold; text-align: center; background-color: #1F4E78; color: #FFFFFF; vertical-align: middle;">Kelas</th>
+                <th rowspan="2" style="border: 1px solid #000000; font-weight: bold; text-align: center; background-color: #1F4E78; color: #FFFFFF; vertical-align: middle;">Jenis Kelamin</th>
+                <th rowspan="2" style="border: 1px solid #000000; font-weight: bold; text-align: center; background-color: #1F4E78; color: #FFFFFF; vertical-align: middle;">Nama Mustahiq</th>
+                <th rowspan="2" style="border: 1px solid #000000; font-weight: bold; text-align: center; background-color: #1F4E78; color: #FFFFFF; vertical-align: middle;">Jumlah Santri</th>
                 
                 <!-- Kolom Hafalan Khusus Kelas Tingkatan Ini -->
                 @foreach($classHafalans as $hafalan)
-                    <th style="border: 1px solid #000000; font-weight: bold; text-align: center; background-color: {{ $hafalan->kriteria == 'Wajib' ? '#FCE4D6' : '#E2EFDA' }}; color: #000000; vertical-align: middle;">
+                    <th rowspan="2" style="border: 1px solid #000000; font-weight: bold; text-align: center; background-color: {{ $hafalan->kriteria == 'Wajib' ? '#FCE4D6' : ($hafalan->kriteria == 'Sunnah' ? '#E2EFDA' : '#FFF2CC') }}; color: #000000; vertical-align: middle;">
                         {{ $hafalan->nama_hafalan }}<br>({{ $hafalan->kriteria }})
                     </th>
                 @endforeach
                 
-                <th style="border: 1px solid #000000; font-weight: bold; text-align: center; background-color: #2F5597; color: #FFFFFF; vertical-align: middle;">Rata-rata</th>
-                <th style="border: 1px solid #000000; font-weight: bold; text-align: center; background-color: #2F5597; color: #FFFFFF; vertical-align: middle;">Point Wajib</th>
-                <th style="border: 1px solid #000000; font-weight: bold; text-align: center; background-color: #2F5597; color: #FFFFFF; vertical-align: middle;">Poin Sunnah</th>
-                <th style="border: 1px solid #000000; font-weight: bold; text-align: center; background-color: #2F5597; color: #FFFFFF; vertical-align: middle;">Prosentase</th>
+                <th rowspan="2" style="border: 1px solid #000000; font-weight: bold; text-align: center; background-color: #2F5597; color: #FFFFFF; vertical-align: middle;">Rata-rata</th>
+                
+                <th colspan="2" style="border: 1px solid #000000; font-weight: bold; text-align: center; background-color: #2F5597; color: #FFFFFF; vertical-align: middle;">hafalan Wajib</th>
+                <th colspan="2" style="border: 1px solid #000000; font-weight: bold; text-align: center; background-color: #2F5597; color: #FFFFFF; vertical-align: middle;">hafalan Sunnah</th>
+                <th colspan="2" style="border: 1px solid #000000; font-weight: bold; text-align: center; background-color: #2F5597; color: #FFFFFF; vertical-align: middle;">hafalan Wisuda</th>
+                
+                <th rowspan="2" style="border: 1px solid #000000; font-weight: bold; text-align: center; background-color: #2F5597; color: #FFFFFF; vertical-align: middle;">Prosentase total</th>
+            </tr>
+            <tr style="background-color: #1F4E78; color: #FFFFFF; font-weight: bold; text-align: center; border: 1px solid #000000;">
+                <th style="border: 1px solid #000000; font-weight: bold; text-align: center; background-color: #2F5597; color: #FFFFFF; vertical-align: middle;">jumlah</th>
+                <th style="border: 1px solid #000000; font-weight: bold; text-align: center; background-color: #2F5597; color: #FFFFFF; vertical-align: middle;">prosentase</th>
+                <th style="border: 1px solid #000000; font-weight: bold; text-align: center; background-color: #2F5597; color: #FFFFFF; vertical-align: middle;">jumlah</th>
+                <th style="border: 1px solid #000000; font-weight: bold; text-align: center; background-color: #2F5597; color: #FFFFFF; vertical-align: middle;">prosentase</th>
+                <th style="border: 1px solid #000000; font-weight: bold; text-align: center; background-color: #2F5597; color: #FFFFFF; vertical-align: middle;">jumlah</th>
+                <th style="border: 1px solid #000000; font-weight: bold; text-align: center; background-color: #2F5597; color: #FFFFFF; vertical-align: middle;">prosentase</th>
             </tr>
         </thead>
         <tbody>
@@ -81,8 +92,16 @@
                     @endforeach
                     
                     <td style="{{ $borderStyle }} text-align: center; font-weight: bold; vertical-align: middle;">{{ $row['rata_rata'] }}</td>
-                    <td style="{{ $borderStyle }} text-align: center; vertical-align: middle;">{{ $row['point_wajib'] }}</td>
-                    <td style="{{ $borderStyle }} text-align: center; vertical-align: middle;">{{ $row['poin_sunnah'] }}</td>
+                    
+                    <td style="{{ $borderStyle }} text-align: center; vertical-align: middle;">{{ $row['wajib_jumlah'] }}</td>
+                    <td style="{{ $borderStyle }} text-align: center; vertical-align: middle;">{{ $row['wajib_prosentase'] }}%</td>
+                    
+                    <td style="{{ $borderStyle }} text-align: center; vertical-align: middle;">{{ $row['sunnah_jumlah'] }}</td>
+                    <td style="{{ $borderStyle }} text-align: center; vertical-align: middle;">{{ $row['sunnah_prosentase'] }}%</td>
+                    
+                    <td style="{{ $borderStyle }} text-align: center; vertical-align: middle;">{{ $row['wisuda_jumlah'] }}</td>
+                    <td style="{{ $borderStyle }} text-align: center; vertical-align: middle;">{{ $row['wisuda_prosentase'] }}%</td>
+                    
                     <td style="{{ $borderStyle }} text-align: center; font-weight: bold; background-color: #F2F2F2; vertical-align: middle;">
                         {{ $row['prosentase'] }}%
                     </td>

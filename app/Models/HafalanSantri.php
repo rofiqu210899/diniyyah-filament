@@ -25,4 +25,9 @@ class HafalanSantri extends Model
     {
         return $this->belongsTo(TahunAjaran::class);
     }
+
+    public function jenjang()
+    {
+        return $this->belongsTo(Madin::class, 'tkt', 'id');
+    }
 }

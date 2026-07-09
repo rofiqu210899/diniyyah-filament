@@ -78,7 +78,7 @@
                                         </th>
                                     @endif
                                     @foreach($headerHafalan as $hafalan)
-                                        <th class="px-1.5 py-2 font-semibold border-b border-gray-200 dark:border-white/10 text-center whitespace-nowrap {{ $hafalan['kriteria'] === 'Wajib' ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400' }}" style="min-width: 36px;">
+                                        <th class="px-1.5 py-2 font-semibold border-b border-gray-200 dark:border-white/10 text-center whitespace-nowrap {{ $hafalan['kriteria'] === 'Wajib' ? 'text-red-600 dark:text-red-400' : ($hafalan['kriteria'] === 'Sunnah' ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400') }}" style="min-width: 36px;">
                                             <div class="flex flex-col items-center gap-0">
                                                 <span class="text-[9px] uppercase tracking-wider text-gray-400 dark:text-gray-500 leading-none">
                                                     {{ $hafalan['tkt_label'] }} K{{ $hafalan['mkls'] }}
@@ -149,6 +149,10 @@
                                 <span class="w-2.5 h-2.5 rounded-sm bg-emerald-100 dark:bg-emerald-900/30 border border-emerald-300 dark:border-emerald-700"></span>
                                 <span class="text-emerald-600 dark:text-emerald-400">Sunnah</span>
                             </span>
+                             <span class="inline-flex items-center gap-1">
+                                 <span class="w-2.5 h-2.5 rounded-sm bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700"></span>
+                                 <span class="text-amber-600 dark:text-amber-400">Wisuda</span>
+                             </span>
                         </div>
                     </div>
 
