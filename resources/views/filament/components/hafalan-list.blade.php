@@ -22,7 +22,7 @@ $wajibSelesai = $totalWajibCount > 0 ? $completedWajibCount >= $totalWajibCount 
         {{-- Dropdown Tahun Ajaran & Tombol Uncek --}}
         <div class="flex items-center gap-3">
             {{-- Tombol Mode Uncek (nanti bisa di-hide berdasarkan role) --}}
-            @if($isAktifSelected)
+            @if($isAktifSelected && !auth()->user()?->hasRole('inputer'))
             <button type="button"
                 wire:click="toggleUncekMode"
                 class="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors

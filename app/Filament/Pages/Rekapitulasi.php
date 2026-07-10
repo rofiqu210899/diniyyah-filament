@@ -24,6 +24,11 @@ class Rekapitulasi extends Page implements HasForms
     protected static string $view = 'filament.pages.rekapitulasi';
     protected static ?string $navigationGroup = 'Laporan';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->hasAnyRole(['admin', 'inputer']) ?? false;
+    }
+
     public ?array $data = [];
 
     public function mount(): void

@@ -32,6 +32,11 @@ class RekapHafalan extends Page implements HasForms
     protected static string $view = 'filament.pages.rekap-hafalan';
     protected static ?string $navigationGroup = 'Laporan';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->hasAnyRole(['admin', 'inputer']) ?? false;
+    }
+
     public ?array $data = [];
 
     

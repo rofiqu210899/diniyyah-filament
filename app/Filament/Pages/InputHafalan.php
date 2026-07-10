@@ -32,6 +32,12 @@ class InputHafalan extends Page implements HasForms
     protected static ?string $navigationIcon = 'heroicon-o-book-open';
     protected static ?string $navigationLabel = 'Input Hafalan';
     protected static string $view = 'filament.pages.input-hafalan';
+    protected static ?string $navigationGroup = 'Laporan';
+
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->hasAnyRole(['admin', 'inputer']) ?? false;
+    }
 
     public ?array $data = [];
 
@@ -360,6 +366,15 @@ class InputHafalan extends Page implements HasForms
     
     public function batalkanHafalan(int $dataHafalanId): void
     {
+        if (auth()->user()?->hasRole('inputer')) {
+            Notification::make()
+                ->title('Akses Ditolak')
+                ->body('Hanya admin yang dapat membatalkan atau mengubah setoran hafalan.')
+                ->danger()
+                ->send();
+            return;
+        }
+
         $santriId = $this->data['santri_id'] ?? null;
 
         
@@ -413,6 +428,9 @@ class InputHafalan extends Page implements HasForms
     
     public function toggleUncekMode(): void
     {
+        if (auth()->user()?->hasRole('inputer')) {
+            return;
+        }
         $this->uncekMode = !$this->uncekMode;
     }
 }
