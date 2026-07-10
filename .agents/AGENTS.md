@@ -58,6 +58,30 @@ Fitur download laporan di halaman custom **Rekapitulasi** menggunakan library **
 
 ---
 
+## 🔐 Otorisasi & Peran Pengguna (Role & Permission)
+
+Sistem menggunakan **Spatie Laravel Permission** terintegrasi dengan Laravel Policies untuk membatasi hak akses berdasarkan peran pengguna:
+1. **Admin**:
+   - Memiliki akses penuh ke semua menu di sistem (grup **Laporan** dan grup **Pengaturan**).
+   - Memiliki hak untuk mengelola pengguna (`UserResource`), melihat log aktivitas (`ActivityLogResource`), serta melakukan pembatalan/uncheck setoran hafalan santri.
+2. **Inputer**:
+   - Hanya memiliki akses ke menu di dalam grup **Laporan** (Hafalan, Ahad Legi, Data Input Hafalan, Input Hafalan).
+   - Tidak dapat mengakses menu grup **Pengaturan**.
+   - Dilarang keras melakukan pembatalan setoran hafalan (tombol "Edit Hafalan" disembunyikan di frontend, dan aksi backend diblokir).
+
+---
+
+## 📝 Log Aktivitas (Audit Trail)
+
+Untuk menjaga akuntabilitas data, seluruh perubahan pada data sensitif dipantau menggunakan trait `App\Traits\LogsActivity`:
+- **Model yang Dipantau**: `User`, `Mustahiq`, `TahunAjaran`, `DataHafalan`, dan `HafalanSantri`.
+- **Aksi yang Dicatat**: `CREATED` (Pembuatan), `UPDATED` (Pembaruan data), dan `DELETED` (Penghapusan).
+- **Metadata Log**: Mencakup ID pelaku, nama pelaku, email pelaku, alamat IP, waktu perubahan, deskripsi tindakan yang deskriptif, serta snapshot data sebelum/sesudah perubahan (`before` dan `after`).
+- **Data Sensitif**: Password disamarkan (`******`) di log sebelum disimpan.
+- **Visualisasi**: Halaman **Log Aktivitas** (hanya untuk Admin) menampilkan list terurut waktu terbaru beserta detail modal untuk melihat perubahan data.
+
+---
+
 ## 💡 Panduan Pengembangan di Hari Lain
 - **Penambahan Fitur**: Jika menambahkan target hafalan atau memodifikasi alur kelas, pastikan selalu menyertakan kolom `jk` (1/2) dan `tahun_ajaran_id` jika data tersebut sensitif terhadap perbedaan gender kelas dan periode tahunan.
 - **Zona Waktu**: Sistem menggunakan zona waktu `Asia/Jakarta` (WIB) dengan locale `id` (Bahasa Indonesia). Pastikan query berbasis tanggal menggunakan Carbon dengan penyesuaian zona waktu ini.

@@ -30,6 +30,16 @@ Sistem Informasi Manajemen Madrasah Diniyyah berbasis web yang dibangun mengguna
 - **Statistik & Progres Kelas** — Menampilkan jumlah santri, nilai rata-rata kelas, jumlah santri tuntas wajib (Point Wajib), tuntas sunnah (Poin Sunnah), dan persentase progres kelas.
 - **Optimasi Kinerja (Bebas N+1)** — Query data teroptimasi menggunakan eager loading dan pemrosesan dalam memori (in-memory) untuk rendering laporan yang sangat cepat dan ringan.
 
+### 🔐 Otorisasi & Peran Pengguna (Role & Permission)
+- **Role Admin** — Memiliki akses penuh ke seluruh menu sistem (grup Laporan dan grup Pengaturan), berhak mengelola akun pengguna, melihat audit log, dan membatalkan status hafalan santri (uncheck).
+- **Role Inputer** — Memiliki akses terbatas hanya ke menu di dalam grup Laporan. Dilarang melakukan uncheck hafalan santri (tombol tersembunyi dan aksi backend terproteksi).
+- **Manajemen Pengguna** — Manajemen akun pengguna (`UserResource`) di grup Pengaturan untuk pendaftaran akun dengan peran tertentu.
+
+### 📝 Log Aktivitas (Audit Trail)
+- **Model Tracking** — Pencatatan otomatis aktivitas pembuatan, perubahan, dan penghapusan data pada model `User`, `Mustahiq`, `TahunAjaran`, `DataHafalan`, dan `HafalanSantri`.
+- **Informasi Lengkap** — Menyimpan waktu, nama/email pelaku, jenis aksi, alamat IP, deskripsi tindakan yang jelas, serta detail perubahan data sebelum dan sesudah (`before` & `after`). Password disamarkan otomatis untuk keamanan.
+- **Visualisasi Log** — Menu khusus Log Aktivitas di grup Pengaturan untuk menampilkan daftar audit log beserta detail perubahannya.
+
 ---
 
 ## 🛠️ Tech Stack
@@ -62,19 +72,34 @@ diniyyah-filament/
 │   │   │   ├── InputHafalan.php          # Halaman input hafalan santri
 │   │   │   └── Rekapitulasi.php          # Halaman filter & download rekap
 │   │   └── Resources/
+│   │       ├── ActivityLogResource.php    # Audit log panel (Admin only)
 │   │       ├── DataHafalanResource.php    # CRUD daftar hafalan per kelas
 │   │       ├── MustahiqResource.php       # CRUD mapping wali kelas
-│   │       └── TahunAjaranResource.php    # Pengelolaan tahun ajaran
+│   │       ├── TahunAjaranResource.php    # Pengelolaan tahun ajaran
+│   │       └── UserResource.php           # CRUD pengelolaan user & role
 │   ├── Listeners/
 │   │   └── CheckTahunAjaranOnLogin.php   # Checker status TA aktif saat login
 │   ├── Models/
+│   │   ├── ActivityLog.php               # Model log aktivitas / audit log
 │   │   ├── bukuinduk.php                 # Model data santri
 │   │   ├── DataHafalan.php               # Model daftar hafalan kelas
 │   │   ├── HafalanSantri.php             # Model riwayat hafalan santri
 │   │   ├── Mustahiq.php                  # Model wali kelas / mustahiq
 │   │   └── TahunAjaran.php               # Model tahun ajaran
-│   └── Providers/
-│       └── EventServiceProvider.php      # Registrasi trigger login listener
+│   ├── Policies/                         # Kebijakan otorisasi Spatie/Laravel
+│   │   ├── ActivityLogPolicy.php
+│   │   ├── DataHafalanPolicy.php
+│   │   ├── HafalanSantriPolicy.php
+│   │   ├── MustahiqPolicy.php
+│   │   ├── TahunAjaranPolicy.php
+│   │   └── UserPolicy.php
+│   ├── Providers/
+│   │   └── EventServiceProvider.php      # Registrasi trigger login listener
+│   └── Traits/
+│       └── LogsActivity.php              # Trait untuk auto-tracking perubahan model
+├── database/
+│   └── seeders/
+│       └── RoleAndUserSeeder.php         # Seeder inisialisasi Role & Admin user
 ├── resources/
 │   └── views/
 │       ├── exports/
