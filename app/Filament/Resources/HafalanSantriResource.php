@@ -20,20 +20,18 @@ class HafalanSantriResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
 
-    protected static ?string $navigationLabel = 'Data Input Hafalan';
+    protected static ?string $navigationLabel = 'Data Kolektif';
 
-    protected static ?string $modelLabel = 'Data Input Hafalan';
+    protected static ?string $modelLabel = 'Data Kolektif';
 
-    protected static ?string $pluralModelLabel = 'Data Input Hafalan';
+    protected static ?string $pluralModelLabel = 'Data Kolektif';
 
     protected static ?string $navigationGroup = 'Laporan';
 
     public static function form(Form $form): Form
     {
         return $form
-            ->schema([
-                
-            ]);
+            ->schema([]);
     }
 
     public static function table(Table $table): Table
@@ -87,7 +85,7 @@ class HafalanSantriResource extends Resource
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
-                
+
                 Tables\Filters\Filter::make('created_at')
                     ->label('Tanggal Input')
                     ->form([
@@ -100,11 +98,11 @@ class HafalanSantriResource extends Resource
                         return $query
                             ->when(
                                 $data['created_from'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('created_at', '>=', $date),
+                                fn(Builder $query, $date): Builder => $query->whereDate('created_at', '>=', $date),
                             )
                             ->when(
                                 $data['created_until'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date),
+                                fn(Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date),
                             );
                     })
                     ->indicateUsing(function (array $data): array {
@@ -120,14 +118,14 @@ class HafalanSantriResource extends Resource
                         return $indicators;
                     }),
 
-                
+
                 Tables\Filters\SelectFilter::make('tkt')
                     ->label('Jenjang')
                     ->options(
                         Madin::pluck('madin', 'id')
                     ),
 
-                
+
                 Tables\Filters\SelectFilter::make('mkls')
                     ->label('Kelas')
                     ->options([
@@ -139,7 +137,7 @@ class HafalanSantriResource extends Resource
                         6 => 'Kelas 6',
                     ]),
 
-                
+
                 Tables\Filters\SelectFilter::make('tahun_ajaran_id')
                     ->label('Tahun Ajaran')
                     ->options(
@@ -166,9 +164,7 @@ class HafalanSantriResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            
-        ];
+        return [];
     }
 
     public static function getPages(): array
