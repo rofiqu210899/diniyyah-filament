@@ -14,7 +14,7 @@
             </x-filament::button>
             
             <x-filament::button 
-                wire:click="downloadRekapMustahiqDirect" 
+                wire:click="openDownloadMustahiq" 
                 icon="heroicon-m-user" 
                 size="lg"
                 color="primary"
