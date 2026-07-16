@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Exports\RekapPertingkatanExport;
 use App\Exports\RekapPertingkatanSheet;
+use App\Exports\RekapMustahiqExport;
 use App\Models\TahunAjaran;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
@@ -126,5 +127,30 @@ class Rekapitulasi extends Page implements HasForms
             ->send();
 
         return Excel::download(new RekapPertingkatanExport($tahunAjaranId), $filename);
+    }
+
+    public function downloadRekapMustahiqDirect()
+    {
+        $this->validate();
+
+        $tahunAjaranId = $this->data['tahun_ajaran_id'];
+        $tahunAjaran = TahunAjaran::find($tahunAjaranId);
+
+        if (!$tahunAjaran) {
+            Notification::make()
+                ->title('Tahun ajaran tidak ditemukan')
+                ->danger()
+                ->send();
+            return null;
+        }
+
+        $filename = 'Rekap_Hafalan_Per_Mustahiq_' . str_replace(['/', ' ', '-'], '_', $tahunAjaran->nama_tahun_ajaran) . '.xlsx';
+
+        Notification::make()
+            ->title('Mengunduh rekapitulasi per mustahiq...')
+            ->success()
+            ->send();
+
+        return Excel::download(new RekapMustahiqExport($tahunAjaranId), $filename);
     }
 }

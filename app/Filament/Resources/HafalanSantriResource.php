@@ -39,7 +39,7 @@ class HafalanSantriResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Tanggal Input')
+                    ->label('TANGGAL INPUT')
                     ->dateTime('d M Y H:i')
                     ->timezone('Asia/Jakarta')
                     ->sortable(),
@@ -50,37 +50,61 @@ class HafalanSantriResource extends Resource
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('santri.nm')
-                    ->label('Nama Santri')
+                    ->label('NAMA LENGKAP')
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('jenjang.madin')
-                    ->label('Jenjang')
+                Tables\Columns\TextColumn::make('ttl')
+                    ->label('TTL')
+                    ->getStateUsing(function ($record) {
+                        $santri = $record->santri;
+                        if (!$santri) return '-';
+                        $bulanIndo = [1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'];
+                        $namaBulan = $bulanIndo[(int) $santri->bln] ?? $santri->bln;
+                        return "{$santri->tl}, {$santri->tlhr} {$namaBulan} {$santri->th}";
+                    }),
+
+                Tables\Columns\TextColumn::make('santri.nayah')
+                    ->label('NAMA ORANG TUA')
+                    ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('mkls')
-                    ->label('Kelas')
-                    ->formatStateUsing(fn($state) => "Kelas {$state}")
+                Tables\Columns\TextColumn::make('alamat')
+                    ->label('ALAMAT')
+                    ->getStateUsing(function ($record) {
+                        $santri = $record->santri;
+                        if (!$santri) return '-';
+                        return "{$santri->Funkelurahan?->nama_kel}, {$santri->Funkecamatan?->nama_kec}, {$santri->Funkabupaten?->nama_kabkot}, {$santri->Funprovinsi?->nama_prov}";
+                    }),
+
+                Tables\Columns\TextColumn::make('kelas_diniyyah')
+                    ->label('KELAS DINIYYAH')
+                    ->getStateUsing(fn($record) => "{$record->mkls} {$record->santri?->mbag} {$record->jenjang?->madin}"),
+
+                Tables\Columns\TextColumn::make('santri.unitSekolah.unit')
+                    ->label('UNIT SEKOLAH')
                     ->sortable(),
+
+                Tables\Columns\TextColumn::make('nama_mustahiq')
+                    ->label('NAMA MUSTAHIQ')
+                    ->getStateUsing(function ($record) {
+                        static $mustahiqCache = [];
+                        $key = "{$record->mkls}_{$record->santri?->mbag}_{$record->tkt}_{$record->santri?->jk}_{$record->tahun_ajaran_id}";
+                        if (!array_key_exists($key, $mustahiqCache)) {
+                            $mustahiq = \App\Models\Mustahiq::where('mkls', $record->mkls)
+                                ->where('mbag', $record->santri?->mbag)
+                                ->where('tkt', $record->tkt)
+                                ->where('jk', $record->santri?->jk)
+                                ->where('tahun_ajaran_id', $record->tahun_ajaran_id)
+                                ->first();
+                            $mustahiqCache[$key] = $mustahiq?->nama_mustahiq ?? '-';
+                        }
+                        return $mustahiqCache[$key];
+                    }),
 
                 Tables\Columns\TextColumn::make('dataHafalan.nama_hafalan')
-                    ->label('Nama Hafalan')
+                    ->label('HAFALAN')
                     ->searchable()
-                    ->sortable(),
-
-                Tables\Columns\TextColumn::make('dataHafalan.kriteria')
-                    ->label('Kriteria')
-                    ->badge()
-                    ->color(fn(string $state): string => match ($state) {
-                        'Wajib' => 'danger',
-                        'Sunnah' => 'success',
-                        'Wisuda' => 'warning',
-                        default => 'gray',
-                    })
-                    ->sortable(),
-
-                Tables\Columns\TextColumn::make('tahunAjaran.nama_tahun_ajaran')
-                    ->label('Tahun Ajaran')
                     ->sortable(),
             ])
             ->defaultSort('created_at', 'desc')
@@ -159,7 +183,16 @@ class HafalanSantriResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->with(['santri', 'dataHafalan', 'tahunAjaran', 'jenjang']);
+            ->with([
+                'santri.Funkelurahan',
+                'santri.Funkecamatan',
+                'santri.Funkabupaten',
+                'santri.Funprovinsi',
+                'santri.unitSekolah',
+                'dataHafalan',
+                'tahunAjaran',
+                'jenjang'
+            ]);
     }
 
     public static function getRelations(): array

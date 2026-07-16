@@ -10,18 +10,17 @@
                 color="primary"
                 class="shadow-sm transition hover:scale-[1.01]"
             >
-                Preview & Unduh Rekap Per Tingkatan
+            Unduh Rekap Per Tingkatan
             </x-filament::button>
             
             <x-filament::button 
-                type="button" 
+                wire:click="downloadRekapMustahiqDirect" 
                 icon="heroicon-m-user" 
                 size="lg"
-                color="gray"
-                disabled
-                class="opacity-60 cursor-not-allowed"
+                color="primary"
+                class="shadow-sm transition hover:scale-[1.01]"
             >
-                Unduh Rekap Per Mustahiq (Segera Hadir)
+                Unduh Rekap Per Mustahiq
             </x-filament::button>
         </div>
     </div>
