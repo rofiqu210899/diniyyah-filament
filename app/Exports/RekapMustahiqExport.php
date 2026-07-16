@@ -12,10 +12,12 @@ use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 class RekapMustahiqExport implements WithMultipleSheets
 {
     protected $tahunAjaranId;
+    protected $tktId;
 
-    public function __construct($tahunAjaranId)
+    public function __construct($tahunAjaranId, $tktId = null)
     {
         $this->tahunAjaranId = $tahunAjaranId;
+        $this->tktId = $tktId;
     }
 
     public function sheets(): array
@@ -23,9 +25,10 @@ class RekapMustahiqExport implements WithMultipleSheets
         $tahunAjaran = TahunAjaran::find($this->tahunAjaranId);
         $tahunAjaranLabel = $tahunAjaran ? $tahunAjaran->nama_tahun_ajaran : '-';
 
-        // 1. Eager load all mustahiqs for this school year
+        // 1. Eager load all mustahiqs for this school year (filtered by tktId if provided)
         $mustahiqs = Mustahiq::with(['madin'])
             ->where('tahun_ajaran_id', $this->tahunAjaranId)
+            ->when($this->tktId, fn($q) => $q->where('tkt', $this->tktId))
             ->orderBy('tkt')
             ->orderBy('mkls')
             ->orderBy('mbag')
@@ -34,6 +37,10 @@ class RekapMustahiqExport implements WithMultipleSheets
 
         // Get arrays of IDs to restrict eager loading query sizes
         $tktIds = $mustahiqs->pluck('tkt')->unique()->toArray();
+
+        if (empty($tktIds)) {
+            return [];
+        }
 
         // 2. Load all students and group by tkt_mkls_mbag_jk in memory
         $allStudents = bukuinduk::with(['unitSekolah'])

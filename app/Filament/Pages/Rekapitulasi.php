@@ -144,13 +144,71 @@ class Rekapitulasi extends Page implements HasForms
             return null;
         }
 
-        $filename = 'Rekap_Hafalan_Per_Mustahiq_' . str_replace(['/', ' ', '-'], '_', $tahunAjaran->nama_tahun_ajaran) . '.xlsx';
+        $suffix = str_replace(['/', ' ', '-'], '_', $tahunAjaran->nama_tahun_ajaran);
+
+        $files = [
+            'ULA' => [
+                'tkt_id' => 1,
+                'filename' => "Rekap_Hafalan_Per_Mustahiq_ULA_{$suffix}.xlsx"
+            ],
+            'WUSTHO' => [
+                'tkt_id' => 2,
+                'filename' => "Rekap_Hafalan_Per_Mustahiq_WUSTHO_{$suffix}.xlsx"
+            ],
+            'ULYA' => [
+                'tkt_id' => 3,
+                'filename' => "Rekap_Hafalan_Per_Mustahiq_ULYA_{$suffix}.xlsx"
+            ],
+        ];
+
+        $generatedFiles = [];
+        foreach ($files as $name => $info) {
+            $hasMustahiq = \App\Models\Mustahiq::where('tahun_ajaran_id', $tahunAjaranId)
+                ->where('tkt', $info['tkt_id'])
+                ->exists();
+
+            if ($hasMustahiq) {
+                Excel::store(new RekapMustahiqExport($tahunAjaranId, $info['tkt_id']), $info['filename'], 'local');
+                $generatedFiles[] = $info['filename'];
+            }
+        }
+
+        if (empty($generatedFiles)) {
+            Notification::make()
+                ->title('Tidak ada data mustahiq')
+                ->body('Tidak ditemukan data mustahiq untuk tingkatan kelas di tahun ajaran ini.')
+                ->warning()
+                ->send();
+            return null;
+        }
+
+        $zipFilename = "Rekap_Hafalan_Per_Mustahiq_{$suffix}.zip";
+        $zipPath = storage_path("app/{$zipFilename}");
+
+        $zip = new \ZipArchive();
+        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
+            foreach ($generatedFiles as $filename) {
+                $filePath = storage_path("app/" . $filename);
+                if (file_exists($filePath)) {
+                    $zip->addFile($filePath, $filename);
+                }
+            }
+            $zip->close();
+        }
+
+        // Delete temporary excel files from storage
+        foreach ($generatedFiles as $filename) {
+            $filePath = storage_path("app/" . $filename);
+            if (file_exists($filePath)) {
+                unlink($filePath);
+            }
+        }
 
         Notification::make()
             ->title('Mengunduh rekapitulasi per mustahiq...')
             ->success()
             ->send();
 
-        return Excel::download(new RekapMustahiqExport($tahunAjaranId), $filename);
+        return response()->download($zipPath)->deleteFileAfterSend(true);
     }
 }
