@@ -7,40 +7,40 @@ Sistem Informasi Manajemen Madrasah Diniyyah berbasis web yang dibangun mengguna
 ## Fitur Utama
 
 ### Manajemen Hafalan
-- **Input Hafalan Santri** — Halaman interaktif untuk mencatat progres hafalan setiap santri dengan sistem checkbox.
-- **Klasifikasi Hafalan** — Hafalan dibedakan menjadi **Wajib** dan **Sunnah**, dengan validasi bahwa hafalan Sunnah hanya bisa dicentang setelah seluruh hafalan Wajib diselesaikan.
-- **Data Hafalan per Kelas** — Pengaturan daftar hafalan yang harus diselesaikan berdasarkan jenjang (Ula, Wustho, Ulya) dan kelas (1–6).
-- **Riwayat Hafalan & Penguncian Kelas** — Pencatatan historis kelas, jenjang, dan unit sekolah saat santri menyelesaikan hafalan. Kelas santri pada tahun ajaran berjalan otomatis dikunci apabila sudah memiliki riwayat setoran untuk mencegah tumpang tindih data.
-- **Mode Uncek (Admin)** — Fitur khusus untuk membatalkan hafalan yang sudah ditandai tuntas.
-- **Ekspor Data Kolektif** — Mengekspor riwayat setoran hafalan santri secara kolektif berdasarkan filter range tanggal input (dari tanggal - sampai tanggal) melalui action modal di halaman Data Kolektif.
+- **Input Hafalan Santri** - Halaman interaktif untuk mencatat progres hafalan setiap santri dengan sistem checkbox.
+- **Klasifikasi Hafalan** - Hafalan dibedakan menjadi **Wajib** dan **Sunnah**, dengan validasi bahwa hafalan Sunnah hanya bisa dicentang setelah seluruh hafalan Wajib diselesaikan.
+- **Data Hafalan per Kelas** - Pengaturan daftar hafalan yang harus diselesaikan berdasarkan jenjang (Ula, Wustho, Ulya) dan kelas (1–6).
+- **Riwayat Hafalan & Penguncian Kelas** - Pencatatan historis kelas, jenjang, dan unit sekolah saat santri menyelesaikan hafalan. Kelas santri pada tahun ajaran berjalan otomatis dikunci apabila sudah memiliki riwayat setoran untuk mencegah tumpang tindih data.
+- **Mode Uncek (Admin)** - Fitur khusus untuk membatalkan hafalan yang sudah ditandai tuntas.
+- **Ekspor Data Kolektif** - Mengekspor riwayat setoran hafalan santri secara kolektif berdasarkan filter range tanggal input (dari tanggal - sampai tanggal) melalui action modal di halaman Data Kolektif.
 
 ### Manajemen Data Santri
-- **Buku Induk** — Database lengkap santri meliputi NIS, nama, jenis kelamin, tempat/tanggal lahir, nama ayah, unit sekolah, dan alamat lengkap.
-- **Biodata Otomatis** — Detail biodata santri ditampilkan secara otomatis saat pencarian di halaman input hafalan, termasuk filter jenis kelamin kelas yang sesuai.
+- **Buku Induk** - Database lengkap santri meliputi NIS, nama, jenis kelamin, tempat/tanggal lahir, nama ayah, unit sekolah, dan alamat lengkap.
+- **Biodata Otomatis** - Detail biodata santri ditampilkan secara otomatis saat pencarian di halaman input hafalan, termasuk filter jenis kelamin kelas yang sesuai.
 
 ### Administrasi Akademik
-- **Tahun Ajaran** — Pengelolaan tahun ajaran dengan mekanisme aktivasi (hanya satu tahun ajaran aktif pada satu waktu).
-- **Auto-Deaktivasi Periode** — Sistem secara otomatis menonaktifkan tahun ajaran berjalan apabila sudah melewati akhir periode (30 Juni) pada saat pengguna login ke sistem.
-- **Mustahiq (Wali Kelas) Per Tahun Ajaran** — Pendataan wali kelas per tahun ajaran yang fleksibel. Mustahiq dipetakan berdasarkan kelas, bagian, tingkatan, dan **jenis kelamin kelas (Putra/Putri)**.
-- **Jenjang Madin** — Mendukung tiga jenjang utama: Ula, Wustho, dan Ulya.
+- **Tahun Ajaran** - Pengelolaan tahun ajaran dengan mekanisme aktivasi (hanya satu tahun ajaran aktif pada satu waktu).
+- **Auto-Deaktivasi Periode** - Sistem secara otomatis menonaktifkan tahun ajaran berjalan apabila sudah melewati akhir periode (30 Juni) pada saat pengguna login ke sistem.
+- **Mustahiq (Wali Kelas) Per Tahun Ajaran** - Pendataan wali kelas per tahun ajaran yang fleksibel. Mustahiq dipetakan berdasarkan kelas, bagian, tingkatan, dan **jenis kelamin kelas (Putra/Putri)**.
+- **Jenjang Madin** - Mendukung tiga jenjang utama: Ula, Wustho, dan Ulya.
 
 ### Laporan Rekapitulasi (Unduh Excel)
-- **Unduh Rekap Per Tingkat** — Fitur mengekspor laporan pencapaian hafalan kelas ke file Excel menggunakan **Laravel Excel**.
-- **Unduh Rekap Per Mustahiq** — Mengekspor laporan pencapaian hafalan detail per Mustahiq (Wali Kelas) dengan modal popup untuk memilih tingkat pendidikan (ULA, Wustho, atau Ulya) untuk diunduh sebagai file Excel multi-sheet.
-- **Multi-Sheet & Tabel Mandiri** — File Excel terbagi menjadi sheet tingkatan (ULA, Wustho, Ulya) dengan sub-tabel terpisah untuk masing-masing kelas (Kelas 1, Kelas 2, dst.), atau per kelas Mustahiq.
-- **Header Kolom Dinamis** — Nama hafalan pada kolom tabel menyesuaikan secara dinamis dengan target hafalan kelas tersebut (tidak ada kolom kosong tak berguna).
-- **Statistik & Progres Kelas** — Menampilkan jumlah santri, nilai rata-rata kelas, jumlah santri tuntas wajib (Point Wajib), tuntas sunnah (Poin Sunnah), dan persentase progres kelas.
-- **Optimasi Kinerja (Bebas N+1)** — Query data teroptimasi menggunakan eager loading dan pemrosesan dalam memori (in-memory) untuk rendering laporan yang sangat cepat dan ringan.
+- **Unduh Rekap Per Tingkat** - Fitur mengekspor laporan pencapaian hafalan kelas ke file Excel menggunakan **Laravel Excel**.
+- **Unduh Rekap Per Mustahiq** - Mengekspor laporan pencapaian hafalan detail per Mustahiq (Wali Kelas) dengan modal popup untuk memilih tingkat pendidikan (ULA, Wustho, atau Ulya) untuk diunduh sebagai file Excel multi-sheet.
+- **Multi-Sheet & Tabel Mandiri** - File Excel terbagi menjadi sheet tingkatan (ULA, Wustho, Ulya) dengan sub-tabel terpisah untuk masing-masing kelas (Kelas 1, Kelas 2, dst.), atau per kelas Mustahiq.
+- **Header Kolom Dinamis** - Nama hafalan pada kolom tabel menyesuaikan secara dinamis dengan target hafalan kelas tersebut (tidak ada kolom kosong tak berguna).
+- **Statistik & Progres Kelas** - Menampilkan jumlah santri, nilai rata-rata kelas, jumlah santri tuntas wajib (Point Wajib), tuntas sunnah (Poin Sunnah), dan persentase progres kelas.
+- **Optimasi Kinerja (Bebas N+1)** - Query data teroptimasi menggunakan eager loading dan pemrosesan dalam memori (in-memory) untuk rendering laporan yang sangat cepat dan ringan.
 
 ### Otorisasi & Peran Pengguna (Role & Permission)
-- **Role Admin** — Memiliki akses penuh ke seluruh menu sistem (grup Laporan dan grup Pengaturan), berhak mengelola akun pengguna, melihat audit log, dan membatalkan status hafalan santri (uncheck).
-- **Role Inputer** — Memiliki akses terbatas hanya ke menu di dalam grup Laporan. Dilarang melakukan uncheck hafalan santri (tombol tersembunyi dan aksi backend terproteksi).
-- **Manajemen Pengguna** — Manajemen akun pengguna (`UserResource`) di grup Pengaturan untuk pendaftaran akun dengan peran tertentu.
+- **Role Admin** - Memiliki akses penuh ke seluruh menu sistem (grup Laporan dan grup Pengaturan), berhak mengelola akun pengguna, melihat audit log, dan membatalkan status hafalan santri (uncheck).
+- **Role Inputer** - Memiliki akses terbatas hanya ke menu di dalam grup Laporan. Dilarang melakukan uncheck hafalan santri (tombol tersembunyi dan aksi backend terproteksi).
+- **Manajemen Pengguna** - Manajemen akun pengguna (`UserResource`) di grup Pengaturan untuk pendaftaran akun dengan peran tertentu.
 
 ### Log Aktivitas (Audit Trail)
-- **Model Tracking** — Pencatatan otomatis aktivitas pembuatan, perubahan, dan penghapusan data pada model `User`, `Mustahiq`, `TahunAjaran`, `DataHafalan`, dan `HafalanSantri`.
-- **Informasi Lengkap** — Menyimpan waktu, nama/email pelaku, jenis aksi, alamat IP, deskripsi tindakan yang jelas, serta detail perubahan data sebelum dan sesudah (`before` & `after`). Password disamarkan otomatis untuk keamanan.
-- **Visualisasi Log** — Menu khusus Log Aktivitas di grup Pengaturan untuk menampilkan daftar audit log beserta detail perubahannya.
+- **Model Tracking** - Pencatatan otomatis aktivitas pembuatan, perubahan, dan penghapusan data pada model `User`, `Mustahiq`, `TahunAjaran`, `DataHafalan`, dan `HafalanSantri`.
+- **Informasi Lengkap** - Menyimpan waktu, nama/email pelaku, jenis aksi, alamat IP, deskripsi tindakan yang jelas, serta detail perubahan data sebelum dan sesudah (`before` & `after`). Password disamarkan otomatis untuk keamanan.
+- **Visualisasi Log** - Menu khusus Log Aktivitas di grup Pengaturan untuk menampilkan daftar audit log beserta detail perubahannya.
 
 ---
 
