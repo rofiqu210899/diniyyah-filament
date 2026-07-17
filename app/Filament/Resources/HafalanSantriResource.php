@@ -54,6 +54,20 @@ class HafalanSantriResource extends Resource
                     ->searchable()
                     ->sortable(),
 
+                Tables\Columns\TextColumn::make('jenis_kelamin')
+                    ->label('JENIS KELAMIN')
+                    ->getStateUsing(fn($record) => match ((int) $record->santri?->jk) {
+                        1 => 'Putra',
+                        2 => 'Putri',
+                        default => '-',
+                    })
+                    ->badge()
+                    ->color(fn($state) => match ($state) {
+                        'Putra' => 'info',
+                        'Putri' => 'pink',
+                        default => 'gray',
+                    }),
+
                 Tables\Columns\TextColumn::make('ttl')
                     ->label('TTL')
                     ->getStateUsing(function ($record) {
@@ -169,6 +183,24 @@ class HafalanSantriResource extends Resource
                             ->pluck('nama_tahun_ajaran', 'id')
                     )
                     ->default(fn() => TahunAjaran::getAktif()?->id),
+
+
+                Tables\Filters\SelectFilter::make('jk')
+                    ->label('Jenis Kelamin')
+                    ->options([
+                        1 => 'Putra',
+                        2 => 'Putri',
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        if (blank($data['value'])) return $query;
+                        return $query->whereHas('santri', fn(Builder $q) =>
+                            $q->where('jk', $data['value'])
+                        );
+                    })
+                    ->indicateUsing(function (array $data): ?string {
+                        if (blank($data['value'])) return null;
+                        return 'Jenis Kelamin: ' . ($data['value'] == 1 ? 'Putra' : 'Putri');
+                    }),
             ])
             ->actions([
                 Tables\Actions\DeleteAction::make(),

@@ -5,6 +5,7 @@ namespace App\Exports;
 use App\Models\HafalanSantri;
 use App\Models\Mustahiq;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
@@ -14,12 +15,14 @@ class HafalanKolektifExport implements FromQuery, WithHeadings, WithMapping, Sho
 {
     protected $tanggalMulai;
     protected $tanggalSampai;
+    protected $jk;
     protected static $mustahiqCache = [];
 
-    public function __construct(string $tanggalMulai, string $tanggalSampai)
+    public function __construct(string $tanggalMulai, string $tanggalSampai, ?int $jk = null)
     {
         $this->tanggalMulai = $tanggalMulai;
         $this->tanggalSampai = $tanggalSampai;
+        $this->jk = $jk;
     }
 
     public function query()
@@ -37,6 +40,11 @@ class HafalanKolektifExport implements FromQuery, WithHeadings, WithMapping, Sho
             ])
             ->whereDate('created_at', '>=', $this->tanggalMulai)
             ->whereDate('created_at', '<=', $this->tanggalSampai)
+            ->when($this->jk, fn(Builder $q) =>
+                $q->whereHas('santri', fn(Builder $sq) =>
+                    $sq->where('jk', $this->jk)
+                )
+            )
             ->orderBy('created_at', 'desc');
     }
 
@@ -46,6 +54,7 @@ class HafalanKolektifExport implements FromQuery, WithHeadings, WithMapping, Sho
             'TANGGAL INPUT',
             'NIS',
             'NAMA LENGKAP',
+            'JENIS KELAMIN',
             'TTL',
             'NAMA ORANG TUA',
             'ALAMAT',
@@ -71,6 +80,13 @@ class HafalanKolektifExport implements FromQuery, WithHeadings, WithMapping, Sho
         // NIS & Nama Lengkap
         $nis = $santri?->noin ?? '-';
         $namaLengkap = $santri?->nm ?? '-';
+
+        // Jenis Kelamin
+        $jenisKelamin = match ((int) $santri?->jk) {
+            1 => 'Putra',
+            2 => 'Putri',
+            default => '-',
+        };
 
         // TTL
         $ttl = '-';
@@ -119,6 +135,7 @@ class HafalanKolektifExport implements FromQuery, WithHeadings, WithMapping, Sho
             $tanggalInput,
             $nis,
             $namaLengkap,
+            $jenisKelamin,
             $ttl,
             $namaOrangTua,
             $alamat,

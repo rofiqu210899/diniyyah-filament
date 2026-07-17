@@ -6,6 +6,7 @@ use App\Filament\Resources\HafalanSantriResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\HafalanKolektifExport;
 
@@ -26,14 +27,28 @@ class ListHafalanSantris extends ListRecords
                     DatePicker::make('tanggal_sampai')
                         ->label('Tanggal Sampai')
                         ->required(),
+                    Select::make('jk')
+                        ->label('Jenis Kelamin')
+                        ->placeholder('Semua (Putra & Putri)')
+                        ->options([
+                            1 => 'Putra',
+                            2 => 'Putri',
+                        ]),
                 ])
                 ->action(function (array $data) {
-                    $tanggalMulai = $data['tanggal_mulai'];
+                    $tanggalMulai  = $data['tanggal_mulai'];
                     $tanggalSampai = $data['tanggal_sampai'];
-                    
+                    $jk            = $data['jk'] ?? null;
+
+                    $jkLabel = match ((int) $jk) {
+                        1 => '-putra',
+                        2 => '-putri',
+                        default => '',
+                    };
+
                     return Excel::download(
-                        new HafalanKolektifExport($tanggalMulai, $tanggalSampai),
-                        "hafalan-kolektif-{$tanggalMulai}-to-{$tanggalSampai}.xlsx"
+                        new HafalanKolektifExport($tanggalMulai, $tanggalSampai, $jk),
+                        "hafalan-kolektif{$jkLabel}-{$tanggalMulai}-to-{$tanggalSampai}.xlsx"
                     );
                 })
         ];

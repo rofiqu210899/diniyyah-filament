@@ -303,6 +303,24 @@ class InputHafalan extends Page implements HasForms
         if (!$santri) return;
 
         
+        // Validasi: mustahiq harus sudah diset untuk kelas santri ini
+        $mustahiq = Mustahiq::where('mkls', $santri->mkls)
+            ->where('mbag', $santri->mbag)
+            ->where('tkt', $santri->tkt)
+            ->where('jk', $santri->jk)
+            ->where('tahun_ajaran_id', $tahunAjaran->id)
+            ->first();
+
+        if (!$mustahiq) {
+            Notification::make()
+                ->title('Mustahiq belum diset')
+                ->body("Mustahiq untuk kelas {$santri->mkls} {$santri->mbag} ({$santri->madin?->madin}) belum diset pada tahun ajaran ini. Silakan atur mustahiq terlebih dahulu di menu Pengaturan.")
+                ->danger()
+                ->send();
+            return;
+        }
+
+        
         $targetHafalan = DataHafalan::find($dataHafalanId);
         if (!$targetHafalan) return;
 
