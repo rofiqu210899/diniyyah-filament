@@ -1,21 +1,9 @@
 {
-	"folders": [
-		{
-			"name": "diniyyah-filament",
-			"path": "../../../.."
-		},
-		{
-			"name": "18. verification",
-			"path": "../../../../../../18. verification"
-		},
-		{
-			"name": "1. smp",
-			"path": "../../../../../../1. smp"
-		},
-		{
-			"name": "23. SKL",
-			"path": "../../../../../../23. SKL"
-		}
-	],
-	"settings": {}
+    "folders": [
+        {
+            "name": "diniyyah-filament",
+            "path": "../../../.."
+        }
+    ],
+    "settings": {},
 }

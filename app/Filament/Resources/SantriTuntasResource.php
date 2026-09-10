@@ -1,0 +1,287 @@
+<?php
+
+namespace App\Filament\Resources;
+
+use App\Filament\Resources\SantriTuntasResource\Pages;
+use App\Models\DataHafalan;
+use App\Models\Madin;
+use App\Models\Mustahiq;
+use App\Models\SantriTuntas;
+use App\Models\TahunAjaran;
+use Filament\Forms\Form;
+use Filament\Resources\Resource;
+use Filament\Tables;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
+
+class SantriTuntasResource extends Resource
+{
+    protected static ?string $model = SantriTuntas::class;
+
+    protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
+
+    protected static ?string $navigationLabel = 'Santri Tuntas';
+
+    protected static ?string $modelLabel = 'Santri Tuntas';
+
+    protected static ?string $pluralModelLabel = 'Santri Tuntas';
+
+    protected static ?string $navigationGroup = 'Sertifikat';
+
+    public static function form(Form $form): Form
+    {
+        return $form->schema([]);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('noin')
+                    ->label('NIS')
+                    ->searchable()
+                    ->sortable()
+                    ->weight('bold'),
+
+                Tables\Columns\TextColumn::make('nm')
+                    ->label('NAMA LENGKAP')
+                    ->searchable()
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('jk')
+                    ->label('JENIS KELAMIN')
+                    ->formatStateUsing(fn($state) => match ((int) $state) {
+                        1 => 'Putra',
+                        2 => 'Putri',
+                        default => '-',
+                    })
+                    ->badge()
+                    ->color(fn($state) => match ((int) $state) {
+                        1 => 'info',
+                        2 => 'pink',
+                        default => 'gray',
+                    }),
+
+                Tables\Columns\TextColumn::make('kelas_diniyyah')
+                    ->label('KELAS DINIYYAH')
+                    ->getStateUsing(fn($record) => "{$record->mkls} {$record->mbag} {$record->madin?->madin}")
+                    ->badge()
+                    ->color('primary'),
+
+                Tables\Columns\TextColumn::make('unitSekolah.unit')
+                    ->label('UNIT SEKOLAH')
+                    ->placeholder('-')
+                    ->toggleable(),
+
+                Tables\Columns\TextColumn::make('mustahiq')
+                    ->label('MUSTAHIQ / WALI KELAS')
+                    ->getStateUsing(function ($record) {
+                        static $mustahiqCache = [];
+                        $taId = request()->input('tableFilters.tahun_ajaran_id.value') ?: TahunAjaran::getAktif()?->id;
+                        $key = "{$record->mkls}_{$record->mbag}_{$record->tkt}_{$record->jk}_{$taId}";
+
+                        if (!array_key_exists($key, $mustahiqCache)) {
+                            $mustahiq = Mustahiq::where('mkls', $record->mkls)
+                                ->where('mbag', $record->mbag)
+                                ->where('tkt', $record->tkt)
+                                ->where('jk', $record->jk)
+                                ->where('tahun_ajaran_id', $taId)
+                                ->value('nama_mustahiq');
+                            $mustahiqCache[$key] = $mustahiq ?? '-';
+                        }
+
+                        return $mustahiqCache[$key];
+                    })
+                    ->searchable(false),
+
+                Tables\Columns\TextColumn::make('status_wajib')
+                    ->label('HAFALAN WAJIB')
+                    ->default('Tuntas')
+                    ->badge()
+                    ->color('success')
+                    ->icon('heroicon-o-check-circle'),
+
+                Tables\Columns\TextColumn::make('status_sunnah')
+                    ->label('HAFALAN SUNNAH')
+                    ->default('Tuntas')
+                    ->badge()
+                    ->color('success')
+                    ->icon('heroicon-o-check-circle'),
+
+                Tables\Columns\TextColumn::make('status_kelulusan')
+                    ->label('STATUS')
+                    ->default('LULUS & TUNTAS')
+                    ->badge()
+                    ->color('warning')
+                    ->weight('bold'),
+            ])
+            ->defaultSort('nm', 'asc')
+            ->filters([
+                Tables\Filters\SelectFilter::make('tahun_ajaran_id')
+                    ->label('Tahun Ajaran')
+                    ->options(
+                        TahunAjaran::orderByDesc('id')->pluck('nama_tahun_ajaran', 'id')
+                    )
+                    ->default(fn() => TahunAjaran::getAktif()?->id)
+                    ->selectablePlaceholder(false)
+                    ->query(function (Builder $query, array $data): Builder {
+                        $taId = !empty($data['value']) ? (int)$data['value'] : TahunAjaran::getAktif()?->id;
+
+                        if (!$taId) {
+                            return $query->whereRaw('1 = 0');
+                        }
+
+                        return $query->where(function (Builder $q) use ($taId) {
+                            $q->whereRaw("(
+                                SELECT COUNT(DISTINCT hs.data_hafalan_id) 
+                                FROM hafalan_santris hs 
+                                JOIN data_hafalans dh ON hs.data_hafalan_id = dh.id 
+                                WHERE hs.santri_id = bukuinduk.id 
+                                  AND hs.tahun_ajaran_id = ? 
+                                  AND hs.mkls = bukuinduk.mkls 
+                                  AND hs.tkt = bukuinduk.tkt 
+                                  AND dh.kriteria = 'Wajib'
+                            ) >= (
+                                SELECT COUNT(*) 
+                                FROM data_hafalans dh 
+                                WHERE dh.mkls = bukuinduk.mkls 
+                                  AND dh.tkt = bukuinduk.tkt 
+                                  AND dh.kriteria = 'Wajib'
+                            ) AND (
+                                SELECT COUNT(*) 
+                                FROM data_hafalans dh 
+                                WHERE dh.mkls = bukuinduk.mkls 
+                                  AND dh.tkt = bukuinduk.tkt 
+                                  AND dh.kriteria = 'Wajib'
+                            ) > 0", [$taId])
+                            ->whereRaw("(
+                                SELECT COUNT(DISTINCT hs.data_hafalan_id) 
+                                FROM hafalan_santris hs 
+                                JOIN data_hafalans dh ON hs.data_hafalan_id = dh.id 
+                                WHERE hs.santri_id = bukuinduk.id 
+                                  AND hs.tahun_ajaran_id = ? 
+                                  AND hs.mkls = bukuinduk.mkls 
+                                  AND hs.tkt = bukuinduk.tkt 
+                                  AND dh.kriteria = 'Sunnah'
+                            ) >= (
+                                SELECT COUNT(*) 
+                                FROM data_hafalans dh 
+                                WHERE dh.mkls = bukuinduk.mkls 
+                                  AND dh.tkt = bukuinduk.tkt 
+                                  AND dh.kriteria = 'Sunnah'
+                            ) AND (
+                                SELECT COUNT(*) 
+                                FROM data_hafalans dh 
+                                WHERE dh.mkls = bukuinduk.mkls 
+                                  AND dh.tkt = bukuinduk.tkt 
+                                  AND dh.kriteria = 'Sunnah'
+                            ) > 0", [$taId]);
+                        });
+                    }),
+
+                Tables\Filters\SelectFilter::make('tkt')
+                    ->label('Jenjang / Tingkat')
+                    ->options(
+                        Madin::whereNotIn('id', [4, 5, 6])->pluck('madin', 'id')
+                    )
+                    ->query(fn(Builder $query, array $data) => filled($data['value']) ? $query->where('tkt', $data['value']) : $query),
+
+                Tables\Filters\SelectFilter::make('mkls')
+                    ->label('Kelas Diniyyah')
+                    ->options([
+                        1 => 'Kelas 1',
+                        2 => 'Kelas 2',
+                        3 => 'Kelas 3',
+                        4 => 'Kelas 4',
+                        5 => 'Kelas 5',
+                        6 => 'Kelas 6',
+                    ])
+                    ->query(fn(Builder $query, array $data) => filled($data['value']) ? $query->where('mkls', $data['value']) : $query),
+
+                Tables\Filters\SelectFilter::make('mbag')
+                    ->label('Bagian')
+                    ->options(array_combine(range('A', 'Z'), range('A', 'Z')))
+                    ->query(fn(Builder $query, array $data) => filled($data['value']) ? $query->where('mbag', $data['value']) : $query),
+
+                Tables\Filters\SelectFilter::make('jk')
+                    ->label('Jenis Kelamin')
+                    ->options([
+                        1 => 'Putra',
+                        2 => 'Putri',
+                    ])
+                    ->query(fn(Builder $query, array $data) => filled($data['value']) ? $query->where('jk', $data['value']) : $query),
+            ])
+            ->headerActions([
+                Tables\Actions\Action::make('cetak_kolektif')
+                    ->label('Cetak Kolektif')
+                    ->icon('heroicon-o-printer')
+                    ->color('success')
+                    ->tooltip('Cetak seluruh sertifikat santri yang sesuai filter saat ini')
+                    ->url(function ($livewire) {
+                        $filters = $livewire->tableFilters ?? [];
+                        $taId = $filters['tahun_ajaran_id']['value'] ?? TahunAjaran::getAktif()?->id;
+                        $tkt = $filters['tkt']['value'] ?? null;
+                        $mkls = $filters['mkls']['value'] ?? null;
+                        $mbag = $filters['mbag']['value'] ?? null;
+                        $jk = $filters['jk']['value'] ?? null;
+
+                        return route('sertifikat.cetak_kolektif', array_filter([
+                            'tahun_ajaran_id' => $taId,
+                            'tkt' => $tkt,
+                            'mkls' => $mkls,
+                            'mbag' => $mbag,
+                            'jk' => $jk,
+                        ]));
+                    }, shouldOpenInNewTab: true),
+            ])
+            ->actions([
+                // Tombol cetak sertifikat (icon saja)
+                Tables\Actions\Action::make('cetak_sertifikat')
+                    ->icon('heroicon-o-printer')
+                    ->iconButton()
+                    ->tooltip('Cetak Sertifikat')
+                    ->color('primary')
+                    ->url(function (SantriTuntas $record, $livewire) {
+                        $filters = $livewire->tableFilters ?? [];
+                        $taId = $filters['tahun_ajaran_id']['value'] ?? TahunAjaran::getAktif()?->id;
+
+                        return route('sertifikat.cetak_single', [
+                            'santri' => $record->id,
+                            'tahun_ajaran_id' => $taId,
+                        ]);
+                    }, shouldOpenInNewTab: true),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkAction::make('cetak_terpilih')
+                    ->label('Cetak Sertifikat Terpilih')
+                    ->icon('heroicon-o-printer')
+                    ->color('success')
+                    ->action(function (Collection $records, $livewire) {
+                        $ids = $records->pluck('id')->implode(',');
+                        $filters = $livewire->tableFilters ?? [];
+                        $taId = $filters['tahun_ajaran_id']['value'] ?? TahunAjaran::getAktif()?->id;
+
+                        $url = route('sertifikat.cetak_kolektif', [
+                            'ids' => $ids,
+                            'tahun_ajaran_id' => $taId,
+                        ]);
+
+                        return redirect()->away($url);
+                    }),
+            ]);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with(['madin', 'unitSekolah', 'Funkelurahan', 'Funkecamatan', 'Funkabupaten', 'Funprovinsi']);
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => Pages\ListSantriTuntas::route('/'),
+        ];
+    }
+}

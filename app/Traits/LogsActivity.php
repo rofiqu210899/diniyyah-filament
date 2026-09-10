@@ -117,6 +117,14 @@ trait LogsActivity
                     return "Mengubah data target hafalan '{$model->nama_hafalan}'";
                 }
                 return "Menghapus data target hafalan '{$model->nama_hafalan}'";
+
+            case 'SettingSertifikat':
+                if ($action === 'created') {
+                    return "Membuat profil pengaturan sertifikat baru '{$model->nama_setting}'";
+                } elseif ($action === 'updated') {
+                    return "Mengubah profil pengaturan sertifikat '{$model->nama_setting}'";
+                }
+                return "Menghapus profil pengaturan sertifikat '{$model->nama_setting}'";
                 
             default:
                 return "Melakukan aksi " . strtoupper($action) . " pada data {$className} (ID: {$model->getKey()})";

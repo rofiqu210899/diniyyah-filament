@@ -41,6 +41,9 @@ class AdminPanelProvider extends PanelProvider
                     ->label('Laporan')
                     ->collapsed(),
                 \Filament\Navigation\NavigationGroup::make()
+                    ->label('Sertifikat')
+                    ->collapsed(false),
+                \Filament\Navigation\NavigationGroup::make()
                     ->label('Pengaturan')
                     ->collapsed(),
             ])

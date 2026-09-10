@@ -394,7 +394,9 @@ class RekapHafalan extends Page implements HasForms
             ->pluck('santri_id')
             ->toArray();
 
-        $santriDariHafalan = bukuinduk::with(['Funkelas', 'unitSekolah'])->whereIn('id', $santriIdsFromHafalan)->get();
+        $santriDariHafalan = bukuinduk::with(['Funkelas', 'unitSekolah'])->whereIn('id', $santriIdsFromHafalan)
+        ->where('jk', $jk)
+        ->get();
 
         
         $semuaSantri = $santriDariBukuinduk->merge($santriDariHafalan)->unique('id')->sortBy('nm');

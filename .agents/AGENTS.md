@@ -58,15 +58,36 @@ Fitur download laporan di halaman custom **Rekapitulasi** menggunakan library **
 
 ---
 
+## 📜 Arsitektur Fitur Sertifikat
+
+Grup navigasi **Sertifikat** mengelola penentuan santri tuntas dan penerbitan sertifikat hafalan:
+1. **`SantriTuntasResource` (Santri Tuntas)**:
+   - Menyaring data santri dari `bukuinduk` yang telah **tuntas 100% pada Hafalan Wajib dan Hafalan Sunnah** di tahun ajaran yang dipilih.
+   - Filter header: `tahun_ajaran_id` (default: tahun ajaran aktif), `tkt` (Jenjang), `mkls` (Kelas), `mbag` (Bagian), dan `jk` (Jenis Kelamin).
+   - Kolom aksi: Tombol cetak sertifikat satuan (icon only printer) yang langsung membuka dokumen sertifikat siap cetak.
+   - Header action & Bulk action: Tombol **Cetak Kolektif** dan **Cetak Sertifikat Terpilih** untuk mencetak seluruh santri yang sesuai filter.
+2. **`SettingSertifikatResource` (Setting Sertifikat)**:
+   - Menyediakan konfigurasi layout sertifikat menyerupai Microsoft Word:
+     - **Ukuran Kertas**: A4, F4 / Folio, Letter, Legal, Custom (mm).
+     - **Orientasi**: Landscape / Portrait.
+     - **Margin**: Top, Right, Bottom, Left (mm).
+     - **Tipografi & Spasi**: Font family, ukuran font per komponen (Judul, Subjudul, Nama Santri, Isi, Footer), Line spacing (1.0, 1.15, 1.5, 2.0), dan Spacing before/after (pt).
+     - **Desain & Bingkai**: Border styles (Classic Gold, Islamic Green, Double Border, Modern Minimalist, Custom Background Image).
+     - **Kop & Narasi**: Format nomor sertifikat, narasi pembuka/isi dinamis (`[nama]`, `[nis]`, `[kelas]`, `[jenjang]`, `[tahun_ajaran]`, `[ayah]`, `[mustahiq]`), dan TTD Digital / Stempel.
+3. **Cetak & Preview**:
+   - `SertifikatController` dan view `resources/views/sertifikat/print.blade.php` menangani pencetakan satuan, kolektif, dan pratinjau layout dengan CSS print `@page` resolusi tinggi.
+
+---
+
 ## 🔐 Otorisasi & Peran Pengguna (Role & Permission)
 
 Sistem menggunakan **Spatie Laravel Permission** terintegrasi dengan Laravel Policies untuk membatasi hak akses berdasarkan peran pengguna:
 1. **Admin**:
-   - Memiliki akses penuh ke semua menu di sistem (grup **Laporan** dan grup **Pengaturan**).
-   - Memiliki hak untuk mengelola pengguna (`UserResource`), melihat log aktivitas (`ActivityLogResource`), serta melakukan pembatalan/uncheck setoran hafalan santri.
+   - Memiliki akses penuh ke semua menu di sistem (grup **Laporan**, grup **Sertifikat**, dan grup **Pengaturan**).
+   - Memiliki hak untuk mengelola pengguna (`UserResource`), melihat log aktivitas (`ActivityLogResource`), mengatur tata letak sertifikat (`SettingSertifikatResource`), serta melakukan pembatalan/uncheck setoran hafalan santri.
 2. **Inputer**:
-   - Hanya memiliki akses ke menu di dalam grup **Laporan** (Hafalan, Ahad Legi, Data Input Hafalan, Input Hafalan).
-   - Tidak dapat mengakses menu grup **Pengaturan**.
+   - Memiliki akses ke menu di dalam grup **Laporan** (Hafalan, Ahad Legi, Data Input Hafalan, Input Hafalan) dan menu **Santri Tuntas** di grup **Sertifikat**.
+   - Tidak dapat mengakses menu grup **Pengaturan** dan **Setting Sertifikat**.
    - Dilarang keras melakukan pembatalan setoran hafalan (tombol "Edit Hafalan" disembunyikan di frontend, dan aksi backend diblokir).
 
 ---
@@ -74,7 +95,7 @@ Sistem menggunakan **Spatie Laravel Permission** terintegrasi dengan Laravel Pol
 ## 📝 Log Aktivitas (Audit Trail)
 
 Untuk menjaga akuntabilitas data, seluruh perubahan pada data sensitif dipantau menggunakan trait `App\Traits\LogsActivity`:
-- **Model yang Dipantau**: `User`, `Mustahiq`, `TahunAjaran`, `DataHafalan`, dan `HafalanSantri`.
+- **Model yang Dipantau**: `User`, `Mustahiq`, `TahunAjaran`, `DataHafalan`, `HafalanSantri`, dan `SettingSertifikat`.
 - **Aksi yang Dicatat**: `CREATED` (Pembuatan), `UPDATED` (Pembaruan data), dan `DELETED` (Penghapusan).
 - **Metadata Log**: Mencakup ID pelaku, nama pelaku, email pelaku, alamat IP, waktu perubahan, deskripsi tindakan yang deskriptif, serta snapshot data sebelum/sesudah perubahan (`before` dan `after`).
 - **Data Sensitif**: Password disamarkan (`******`) di log sebelum disimpan.
@@ -85,3 +106,4 @@ Untuk menjaga akuntabilitas data, seluruh perubahan pada data sensitif dipantau 
 ## 💡 Panduan Pengembangan di Hari Lain
 - **Penambahan Fitur**: Jika menambahkan target hafalan atau memodifikasi alur kelas, pastikan selalu menyertakan kolom `jk` (1/2) dan `tahun_ajaran_id` jika data tersebut sensitif terhadap perbedaan gender kelas dan periode tahunan.
 - **Zona Waktu**: Sistem menggunakan zona waktu `Asia/Jakarta` (WIB) dengan locale `id` (Bahasa Indonesia). Pastikan query berbasis tanggal menggunakan Carbon dengan penyesuaian zona waktu ini.
+
