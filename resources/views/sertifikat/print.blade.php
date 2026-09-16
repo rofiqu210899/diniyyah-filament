@@ -253,16 +253,27 @@
             justify-content: center;
         }
 
+        .ttd-spacer-kabid {
+            height: 82px;
+        }
+
         .ttd-signature-img {
             max-height: 48px;
             max-width: 140px;
             object-fit: contain;
         }
 
+        .ttd-signature-kabid {
+            max-height: 82px !important;
+            max-width: 250px !important;
+            height: 80px;
+            width: auto;
+            object-fit: contain;
+        }
+
         .ttd-nama {
             font-weight: bold;
             text-transform: uppercase;
-    
         }
 
         /* 4. Bottom Section: Mengetahui & 2 Signers */
@@ -518,9 +529,9 @@
                                 <td class="signer-col">
                                     @if($setting->show_ttd_2 ?? true)
                                         <div class="ttd-jabatan">{{ $setting->ttd_2_jabatan ?? 'Kabid. Pendidikan dan Pengajaran' }}</div>
-                                        <div class="ttd-spacer">
+                                        <div class="ttd-spacer ttd-spacer-kabid">
                                             @if($setting->ttd_2_image_path)
-                                                <img src="{{ asset('storage/' . $setting->ttd_2_image_path) }}" class="ttd-signature-img" alt="TTD">
+                                                <img src="{{ asset('storage/' . $setting->ttd_2_image_path) }}" class="ttd-signature-img ttd-signature-kabid" alt="TTD">
                                             @endif
                                         </div>
                                         <div class="ttd-nama">{{ $setting->ttd_2_nama ?? 'DR. KH. ABDUL KHOLIQ SYAFA\'AT, MA.' }}</div>
