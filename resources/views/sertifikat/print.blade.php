@@ -212,14 +212,14 @@
         }
 
         .photo-box {
-            width: 30mm;
-            height: 40mm;
+            width: 27mm;
+            height: 37mm;
             border: 1px solid #000000;
             display: flex;
             align-items: center;
             justify-content: center;
             text-align: center;
-            font-size: 10pt;
+            font-size: 9pt;
             color: #333333;
             line-height: 1.3;
         }
@@ -360,31 +360,37 @@
                 $mustahiq = $item['mustahiq'];
                 $tahunAjaranNama = $item['tahun_ajaran_nama'];
                 
-                // Format Tempat / Tgl Lahir
+                // Format Tempat / Tgl Lahir (Panjang & Capitalize Each Word)
+                $tempatLahir = $santri->tl ? ucwords(strtolower(trim($santri->tl))) : '';
+                $bulanIndo = [1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'];
+                $namaBulan = $bulanIndo[(int) $santri->bln] ?? $santri->bln;
+
                 $ttlFormatted = '-';
-                if ($santri->tl && $santri->tlhr && $santri->bln && $santri->th) {
-                    $ttlFormatted = "{$santri->tl}, {$santri->tlhr}/{$santri->bln}/{$santri->th}";
-                } elseif ($santri->tl) {
-                    $ttlFormatted = $santri->tl;
+                if ($tempatLahir && $santri->tlhr && $namaBulan && $santri->th) {
+                    $ttlFormatted = "{$tempatLahir}, {$santri->tlhr} {$namaBulan} {$santri->th}";
+                } elseif ($tempatLahir) {
+                    $ttlFormatted = $tempatLahir;
                 }
 
-                // Format Alamat
+                // Format Nama Orang Tua (Uppercase)
+                $namaOrangTua = $santri->nayah ? strtoupper(trim($santri->nayah)) : '-';
+
+                // Format Alamat (Capitalize Each Word)
                 $alamatParts = array_filter([
-                    $santri->Funkelurahan?->nama_kel,
-                    $santri->Funkecamatan?->nama_kec,
-                    $santri->Funkabupaten?->nama_kabkot ? str_replace(['KABUPATEN ', 'KOTA '], '', $santri->Funkabupaten->nama_kabkot) : null,
-                    $santri->Funprovinsi?->nama_prov ? str_replace('JAWA TIMUR', 'Jatim', $santri->Funprovinsi->nama_prov) : null,
+                    $santri->Funkelurahan?->nama_kel ? ucwords(strtolower(trim($santri->Funkelurahan->nama_kel))) : null,
+                    $santri->Funkecamatan?->nama_kec ? ucwords(strtolower(trim($santri->Funkecamatan->nama_kec))) : null,
+                    $santri->Funkabupaten?->nama_kabkot ? ucwords(strtolower(trim(str_ireplace(['KABUPATEN ', 'KOTA '], '', $santri->Funkabupaten->nama_kabkot)))) : null,
+                    $santri->Funprovinsi?->nama_prov ? (strtoupper(trim($santri->Funprovinsi->nama_prov)) === 'JAWA TIMUR' ? 'Jatim' : ucwords(strtolower(trim($santri->Funprovinsi->nama_prov)))) : null,
                 ]);
                 $alamatFormatted = !empty($alamatParts) ? implode(', ', $alamatParts) : '-';
 
                 // Format Kelas
                 $kelasDiniyyah = trim("{$santri->mkls} {$santri->mbag} {$santri->madin?->madin}");
 
-                // Mustahiq / qoh label
-                $isPutri = (int)$santri->jk === 2;
-                $mustahiqLabel = $isPutri ? 'Mustahiqqoh' : 'Mustahiq';
+                // Format Mustahiq (Capitalize Each Word)
+                $mustahiqFormatted = $mustahiq ? ucwords(strtolower(trim($mustahiq))) : '-';
 
-                // Atas Prestasinya: Ambil HANYA hafalan yang telah diselesaikan (tuntas) oleh santri
+                // Atas Prestasinya: Ambil HANYA hafalan yang telah diselesaikan (tuntas) oleh santri & Capitalize Each Word
                 $currentTaId = $student['tahun_ajaran_id'] ?? ($tahunAjaranId ?? \App\Models\TahunAjaran::getAktif()?->id);
 
                 $targetHafalanList = \App\Models\DataHafalan::whereIn('id', function ($sub) use ($santri, $currentTaId) {
@@ -416,6 +422,7 @@
                     [$targetHafalanList ?: 'Hafalan Target', $kelasDiniyyah, $santri->madin?->madin ?? '', $tahunAjaranNama],
                     $prestasiText
                 );
+                $prestasiFormatted = ucwords(strtolower(trim($prestasiText)));
 
                 // Format Nomor Surat Otomatis per Siswa
                 $nomorSurat = $setting->formatNomorSertifikat($index, [
@@ -463,7 +470,7 @@
                             <tr>
                                 <td class="col-label">Nama Orang Tua</td>
                                 <td class="col-sep">:</td>
-                                <td class="col-val val-orangtua">{{ $santri->nayah ?? '-' }}</td>
+                                <td class="col-val val-orangtua">{{ $namaOrangTua }}</td>
                             </tr>
                             <tr>
                                 <td class="col-label">Alamat</td>
@@ -478,12 +485,12 @@
                             <tr>
                                 <td class="col-label">Mustahiq/qoh</td>
                                 <td class="col-sep">:</td>
-                                <td class="col-val">{{ $mustahiq }}</td>
+                                <td class="col-val">{{ $mustahiqFormatted }}</td>
                             </tr>
                             <tr>
                                 <td class="col-label">Atas Prestasinya</td>
                                 <td class="col-sep">:</td>
-                                <td class="col-val">{{ $prestasiText }}</td>
+                                <td class="col-val">{{ $prestasiFormatted }}</td>
                             </tr>
                         </table>
                     </div>
