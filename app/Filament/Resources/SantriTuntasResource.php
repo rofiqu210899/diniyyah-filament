@@ -181,7 +181,7 @@ class SantriTuntasResource extends Resource
                                   AND hs.mkls = bukuinduk.mkls 
                                   AND hs.tkt = bukuinduk.tkt 
                                   AND dh.kriteria = 'Sunnah'
-                            ) >= 1", [$taId]);
+                            ) >= 0", [$taId]);
                         });
                     }),
 
