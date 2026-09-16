@@ -150,7 +150,7 @@
             letter-spacing: 0.5px;
         }
 
-        /* 2. Biodata Table */
+      /* Birodata */
         .biodata-section {
             margin-top: 4px;
             margin-bottom: 16px;
@@ -327,7 +327,7 @@
 </head>
 <body>
 
-    <!-- Screen Toolbar -->
+   
     <div class="no-print-toolbar">
         <div class="toolbar-title">
             <svg style="width:20px;height:20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
@@ -373,16 +373,36 @@
                 $isPutri = (int)$santri->jk === 2;
                 $mustahiqLabel = $isPutri ? 'Mustahiqqoh' : 'Mustahiq';
 
-                // Atas Prestasinya
-                $targetHafalanList = \App\Models\DataHafalan::where('mkls', $santri->mkls)
-                    ->where('tkt', $santri->tkt)
-                    ->pluck('nama_hafalan')
-                    ->implode(', ');
+                // Atas Prestasinya: Ambil HANYA hafalan yang telah diselesaikan (tuntas) oleh santri
+                $currentTaId = $student['tahun_ajaran_id'] ?? ($tahunAjaranId ?? \App\Models\TahunAjaran::getAktif()?->id);
+
+                $targetHafalanList = \App\Models\DataHafalan::whereIn('id', function ($sub) use ($santri, $currentTaId) {
+                    $sub->select('data_hafalan_id')
+                        ->from('hafalan_santris')
+                        ->where('santri_id', $santri->id)
+                        ->where('tahun_ajaran_id', $currentTaId)
+                        ->where('tkt', $santri->tkt)
+                        ->where('mkls', $santri->mkls);
+                })
+                ->orderBy('kriteria', 'desc')
+                ->orderBy('id', 'asc')
+                ->pluck('nama_hafalan')
+                ->implode(', ');
+
+                // Fallback jika belum ada data setoran (misal saat pratinjau desain setting dengan dummy santri)
+                if (empty($targetHafalanList)) {
+                    $targetHafalanList = \App\Models\DataHafalan::where('mkls', $santri->mkls)
+                        ->where('tkt', $santri->tkt)
+                        ->orderBy('kriteria', 'desc')
+                        ->orderBy('id', 'asc')
+                        ->pluck('nama_hafalan')
+                        ->implode(', ');
+                }
                 
                 $prestasiText = $setting->atas_prestasinya ?: 'Hafal [hafalan]';
                 $prestasiText = str_replace(
                     ['[hafalan]', '[kelas]', '[jenjang]', '[tahun_ajaran]'],
-                    [$targetHafalanList ?: 'Seluruh Target Wajib & Sunnah', $kelasDiniyyah, $santri->madin?->madin ?? '', $tahunAjaranNama],
+                    [$targetHafalanList ?: 'Hafalan Target', $kelasDiniyyah, $santri->madin?->madin ?? '', $tahunAjaranNama],
                     $prestasiText
                 );
 

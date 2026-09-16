@@ -13,9 +13,7 @@ use Illuminate\Http\Request;
 
 class SertifikatController extends Controller
 {
-    /**
-     * Cetak Sertifikat Satuan
-     */
+//    function untuk cetak sertifikat siji siji
     public function printSingle(Request $request, int $santriId)
     {
         $santri = bukuinduk::with(['madin', 'unitSekolah', 'Funkelurahan', 'Funkecamatan', 'Funkabupaten', 'Funprovinsi'])
@@ -43,6 +41,7 @@ class SertifikatController extends Controller
                 'santri' => $santri,
                 'mustahiq' => $mustahiq,
                 'tahun_ajaran_nama' => $tahunAjaranNama,
+                'tahun_ajaran_id' => $tahunAjaranId,
             ]
         ];
 
@@ -57,13 +56,12 @@ class SertifikatController extends Controller
             'paperWidthMm',
             'paperHeightMm',
             'cssPaperSize',
-            'pageTitle'
+            'pageTitle',
+            'tahunAjaranId'
         ));
     }
 
-    /**
-     * Cetak Sertifikat Kolektif
-     */
+    // function gae nyetak kolektif
     public function printCollective(Request $request)
     {
         $tahunAjaranId = (int) $request->input('tahun_ajaran_id', TahunAjaran::getAktif()?->id);
@@ -126,6 +124,7 @@ class SertifikatController extends Controller
                     'santri' => $santri,
                     'mustahiq' => $mustahiqCache[$cacheKey],
                     'tahun_ajaran_nama' => $tahunAjaranNama,
+                    'tahun_ajaran_id' => $tahunAjaranId,
                 ];
             }
         }
@@ -144,13 +143,12 @@ class SertifikatController extends Controller
             'paperWidthMm',
             'paperHeightMm',
             'cssPaperSize',
-            'pageTitle'
+            'pageTitle',
+            'tahunAjaranId'
         ));
     }
 
-    /**
-     * Pratinjau Desain Pengaturan Sertifikat
-     */
+    // freview sertifikat
     public function previewSetting(Request $request, int $settingId)
     {
         $setting = SettingSertifikat::findOrFail($settingId);
@@ -158,7 +156,7 @@ class SertifikatController extends Controller
         $tahunAjaran = TahunAjaran::find($tahunAjaranId);
         $tahunAjaranNama = $tahunAjaran ? $tahunAjaran->nama_tahun_ajaran : (date('Y') . '/' . (date('Y') + 1));
 
-        // Buat mock/dummy santri jika database kosong, atau ambil santri contoh
+       
         $sampleSantri = bukuinduk::with(['madin', 'unitSekolah', 'Funkelurahan', 'Funkecamatan', 'Funkabupaten', 'Funprovinsi'])->first();
 
         if (!$sampleSantri) {
@@ -177,6 +175,7 @@ class SertifikatController extends Controller
                 'santri' => $sampleSantri,
                 'mustahiq' => 'Ust. M. Ridwan, S.Pd',
                 'tahun_ajaran_nama' => $tahunAjaranNama,
+                'tahun_ajaran_id' => $tahunAjaranId,
             ]
         ];
 
@@ -190,13 +189,11 @@ class SertifikatController extends Controller
             'paperWidthMm',
             'paperHeightMm',
             'cssPaperSize',
-            'pageTitle'
+            'pageTitle',
+            'tahunAjaranId'
         ));
     }
 
-    /**
-     * Helper evaluasi apakah santri tuntas Wajib & Sunnah
-     */
     public static function isSantriTuntas(bukuinduk $santri, ?int $tahunAjaranId = null): bool
     {
         $taId = $tahunAjaranId ?: TahunAjaran::getAktif()?->id;
