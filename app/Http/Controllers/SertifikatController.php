@@ -241,13 +241,13 @@ class SertifikatController extends Controller
             }
         }
 
-        // Hitung sunnah yang diselesaikan
+        // Hitung sunnah yang diselesaikan (minimal 1 selesai)
         $completedSunnahCount = 0;
         if ($targetSunnahCount > 0) {
             $completedSunnahCount = DataHafalan::whereIn('id', $hafalanSantriIds)
                 ->where('kriteria', 'Sunnah')
                 ->count();
-            if ($completedSunnahCount < $targetSunnahCount) {
+            if ($completedSunnahCount < 1) {
                 return false;
             }
         }

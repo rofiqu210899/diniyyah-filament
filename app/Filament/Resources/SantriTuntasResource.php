@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\SantriTuntasResource\Pages;
 use App\Models\DataHafalan;
+use App\Models\HafalanSantri;
 use App\Models\Madin;
 use App\Models\Mustahiq;
 use App\Models\SantriTuntas;
@@ -104,7 +105,23 @@ class SantriTuntasResource extends Resource
 
                 Tables\Columns\TextColumn::make('status_sunnah')
                     ->label('HAFALAN SUNNAH')
-                    ->default('Tuntas')
+                    ->getStateUsing(function ($record) {
+                        static $cacheSunnah = [];
+                        $taId = request()->input('tableFilters.tahun_ajaran_id.value') ?: TahunAjaran::getAktif()?->id;
+                        $key = "{$record->id}_{$record->mkls}_{$record->tkt}_{$taId}";
+
+                        if (!array_key_exists($key, $cacheSunnah)) {
+                            $count = HafalanSantri::where('santri_id', $record->id)
+                                ->where('tahun_ajaran_id', $taId)
+                                ->where('tkt', $record->tkt)
+                                ->where('mkls', $record->mkls)
+                                ->whereHas('dataHafalan', fn($q) => $q->where('kriteria', 'Sunnah'))
+                                ->count();
+                            $cacheSunnah[$key] = $count;
+                        }
+
+                        return $cacheSunnah[$key] . ' Selesai';
+                    })
                     ->badge()
                     ->color('success')
                     ->icon('heroicon-o-check-circle'),
@@ -164,19 +181,7 @@ class SantriTuntasResource extends Resource
                                   AND hs.mkls = bukuinduk.mkls 
                                   AND hs.tkt = bukuinduk.tkt 
                                   AND dh.kriteria = 'Sunnah'
-                            ) >= (
-                                SELECT COUNT(*) 
-                                FROM data_hafalans dh 
-                                WHERE dh.mkls = bukuinduk.mkls 
-                                  AND dh.tkt = bukuinduk.tkt 
-                                  AND dh.kriteria = 'Sunnah'
-                            ) AND (
-                                SELECT COUNT(*) 
-                                FROM data_hafalans dh 
-                                WHERE dh.mkls = bukuinduk.mkls 
-                                  AND dh.tkt = bukuinduk.tkt 
-                                  AND dh.kriteria = 'Sunnah'
-                            ) > 0", [$taId]);
+                            ) >= 1", [$taId]);
                         });
                     }),
 

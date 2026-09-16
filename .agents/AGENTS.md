@@ -62,7 +62,7 @@ Fitur download laporan di halaman custom **Rekapitulasi** menggunakan library **
 
 Grup navigasi **Sertifikat** mengelola penentuan santri tuntas dan penerbitan sertifikat hafalan:
 1. **`SantriTuntasResource` (Santri Tuntas)**:
-   - Menyaring data santri dari `bukuinduk` yang telah **tuntas 100% pada Hafalan Wajib dan Hafalan Sunnah** di tahun ajaran yang dipilih.
+   - Menyaring data santri dari `bukuinduk` yang telah **tuntas 100% pada Hafalan Wajib dan minimal menyelesaikan 1 Hafalan Sunnah** di tahun ajaran yang dipilih.
    - Filter header: `tahun_ajaran_id` (default: tahun ajaran aktif), `tkt` (Jenjang), `mkls` (Kelas), `mbag` (Bagian), dan `jk` (Jenis Kelamin).
    - Kolom aksi: Tombol cetak sertifikat satuan (icon only printer) yang langsung membuka dokumen sertifikat siap cetak.
    - Header action & Bulk action: Tombol **Cetak Kolektif** dan **Cetak Sertifikat Terpilih** untuk mencetak seluruh santri yang sesuai filter.
