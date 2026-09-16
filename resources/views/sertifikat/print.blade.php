@@ -208,7 +208,7 @@
         .photo-box-wrap {
             position: absolute;
             left: 200px;
-            top: 6px;
+            top: 20px;
         }
 
         .photo-box {
