@@ -271,6 +271,15 @@
             object-fit: contain;
         }
 
+        .ttd-signature-pkm {
+            height: 95px;
+            max-height: 100px !important;
+            max-width: 180px !important;
+            width: auto;
+            object-fit: contain;
+            z-index: 2;
+        }
+
         .ttd-nama {
             font-weight: bold;
             text-transform: uppercase;
@@ -286,11 +295,13 @@
             text-align: center;
             font-size: 11pt;
             margin-bottom: 12px;
+            transform: translateX(25px);
         }
 
         .bottom-signers-table {
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed;
         }
 
         .signer-col {
@@ -298,7 +309,7 @@
             text-align: center;
             vertical-align: top;
             font-size: {{ $setting->font_size_footer ?? 11 }}pt;
-            padding: 0 0px;
+            padding: 0 10px;
         }
 
         .stempel-overlay {
@@ -514,7 +525,7 @@
                                 
                                 <div class="ttd-spacer">
                                     @if($setting->ttd_1_image_path)
-                                        <img src="{{ asset('storage/' . $setting->ttd_1_image_path) }}" class="ttd-signature-img" alt="TTD">
+                                        <img src="{{ asset('storage/' . $setting->ttd_1_image_path) }}" class="ttd-signature-img ttd-signature-pkm" alt="TTD">
                                     @endif
                                 </div>
                                 
