@@ -384,8 +384,8 @@
                         ->where('tkt', $santri->tkt)
                         ->where('mkls', $santri->mkls);
                 })
-                ->orderBy('kriteria', 'desc')
-                ->orderBy('id', 'asc')
+                ->orderByRaw("FIELD(kriteria, 'Wajib', 'Sunnah', 'Wisuda') ASC")
+                ->orderBy('nama_hafalan', 'asc')
                 ->pluck('nama_hafalan')
                 ->implode(', ');
 
@@ -393,8 +393,8 @@
                 if (empty($targetHafalanList)) {
                     $targetHafalanList = \App\Models\DataHafalan::where('mkls', $santri->mkls)
                         ->where('tkt', $santri->tkt)
-                        ->orderBy('kriteria', 'desc')
-                        ->orderBy('id', 'asc')
+                        ->orderByRaw("FIELD(kriteria, 'Wajib', 'Sunnah', 'Wisuda') ASC")
+                        ->orderBy('nama_hafalan', 'asc')
                         ->pluck('nama_hafalan')
                         ->implode(', ');
                 }
