@@ -29,9 +29,19 @@ class SertifikatController extends Controller
             $setting = SettingSertifikat::getAktifSetting();
         }
 
-        $mustahiq = Mustahiq::where('mkls', $santri->mkls)
+        // Ambil snapshot historis dari hafalan_santris untuk tahun ajaran ini
+        $snapshot = HafalanSantri::where('santri_id', $santri->id)
+            ->where('tahun_ajaran_id', $tahunAjaranId)
+            ->with('jenjang')
+            ->first();
+
+        $mkls = $snapshot?->mkls ?? $santri->mkls;
+        $tkt = $snapshot?->tkt ?? $santri->tkt;
+        $jenjangNama = $snapshot?->jenjang?->madin ?? $santri->madin?->madin;
+
+        $mustahiq = Mustahiq::where('mkls', $mkls)
             ->where('mbag', $santri->mbag)
-            ->where('tkt', $santri->tkt)
+            ->where('tkt', $tkt)
             ->where('jk', $santri->jk)
             ->where('tahun_ajaran_id', $tahunAjaranId)
             ->value('nama_mustahiq') ?? '-';
@@ -42,6 +52,10 @@ class SertifikatController extends Controller
                 'mustahiq' => $mustahiq,
                 'tahun_ajaran_nama' => $tahunAjaranNama,
                 'tahun_ajaran_id' => $tahunAjaranId,
+                'mkls' => $mkls,
+                'tkt' => $tkt,
+                'mbag' => $santri->mbag,
+                'jenjang_nama' => $jenjangNama,
             ]
         ];
 
@@ -88,10 +102,40 @@ class SertifikatController extends Controller
             $query->whereIn('id', $ids);
         } else {
             if (!empty($tkt)) {
-                $query->where('tkt', $tkt);
+                $query->where(function ($q) use ($tkt, $tahunAjaranId) {
+                    $q->whereExists(function ($sub) use ($tkt, $tahunAjaranId) {
+                        $sub->selectRaw(1)
+                            ->from('hafalan_santris')
+                            ->whereColumn('santri_id', 'bukuinduk.id')
+                            ->where('tahun_ajaran_id', $tahunAjaranId)
+                            ->where('tkt', $tkt);
+                    })->orWhere(function ($fallback) use ($tkt, $tahunAjaranId) {
+                        $fallback->whereNotExists(function ($sub) use ($tahunAjaranId) {
+                            $sub->selectRaw(1)
+                                ->from('hafalan_santris')
+                                ->whereColumn('santri_id', 'bukuinduk.id')
+                                ->where('tahun_ajaran_id', $tahunAjaranId);
+                        })->where('tkt', $tkt);
+                    });
+                });
             }
             if (!empty($mkls)) {
-                $query->where('mkls', $mkls);
+                $query->where(function ($q) use ($mkls, $tahunAjaranId) {
+                    $q->whereExists(function ($sub) use ($mkls, $tahunAjaranId) {
+                        $sub->selectRaw(1)
+                            ->from('hafalan_santris')
+                            ->whereColumn('santri_id', 'bukuinduk.id')
+                            ->where('tahun_ajaran_id', $tahunAjaranId)
+                            ->where('mkls', $mkls);
+                    })->orWhere(function ($fallback) use ($mkls, $tahunAjaranId) {
+                        $fallback->whereNotExists(function ($sub) use ($tahunAjaranId) {
+                            $sub->selectRaw(1)
+                                ->from('hafalan_santris')
+                                ->whereColumn('santri_id', 'bukuinduk.id')
+                                ->where('tahun_ajaran_id', $tahunAjaranId);
+                        })->where('mkls', $mkls);
+                    });
+                });
             }
             if (!empty($mbag)) {
                 $query->where('mbag', $mbag);
@@ -110,11 +154,20 @@ class SertifikatController extends Controller
         foreach ($rawStudents as $santri) {
             // Cek kriteria tuntas
             if ($this->isSantriTuntas($santri, $tahunAjaranId)) {
-                $cacheKey = "{$santri->mkls}_{$santri->mbag}_{$santri->tkt}_{$santri->jk}_{$tahunAjaranId}";
+                $snapshot = HafalanSantri::where('santri_id', $santri->id)
+                    ->where('tahun_ajaran_id', $tahunAjaranId)
+                    ->with('jenjang')
+                    ->first();
+
+                $mkls = $snapshot?->mkls ?? $santri->mkls;
+                $tkt = $snapshot?->tkt ?? $santri->tkt;
+                $jenjangNama = $snapshot?->jenjang?->madin ?? $santri->madin?->madin;
+
+                $cacheKey = "{$mkls}_{$santri->mbag}_{$tkt}_{$santri->jk}_{$tahunAjaranId}";
                 if (!isset($mustahiqCache[$cacheKey])) {
-                    $mustahiqCache[$cacheKey] = Mustahiq::where('mkls', $santri->mkls)
+                    $mustahiqCache[$cacheKey] = Mustahiq::where('mkls', $mkls)
                         ->where('mbag', $santri->mbag)
-                        ->where('tkt', $santri->tkt)
+                        ->where('tkt', $tkt)
                         ->where('jk', $santri->jk)
                         ->where('tahun_ajaran_id', $tahunAjaranId)
                         ->value('nama_mustahiq') ?? '-';
@@ -125,6 +178,10 @@ class SertifikatController extends Controller
                     'mustahiq' => $mustahiqCache[$cacheKey],
                     'tahun_ajaran_nama' => $tahunAjaranNama,
                     'tahun_ajaran_id' => $tahunAjaranId,
+                    'mkls' => $mkls,
+                    'tkt' => $tkt,
+                    'mbag' => $santri->mbag,
+                    'jenjang_nama' => $jenjangNama,
                 ];
             }
         }
@@ -176,6 +233,10 @@ class SertifikatController extends Controller
                 'mustahiq' => 'Ust. M. Ridwan, S.Pd',
                 'tahun_ajaran_nama' => $tahunAjaranNama,
                 'tahun_ajaran_id' => $tahunAjaranId,
+                'mkls' => $sampleSantri->mkls,
+                'tkt' => $sampleSantri->tkt,
+                'mbag' => $sampleSantri->mbag,
+                'jenjang_nama' => $sampleSantri->madin?->madin ?? 'ULA',
             ]
         ];
 
@@ -199,14 +260,22 @@ class SertifikatController extends Controller
         $taId = $tahunAjaranId ?: TahunAjaran::getAktif()?->id;
         if (!$taId) return false;
 
-        // Cek target hafalan kelas santri
-        $targetWajibCount = DataHafalan::where('tkt', $santri->tkt)
-            ->where('mkls', $santri->mkls)
+        // Ambil snapshot mkls & tkt dari hafalan_santris untuk tahun ajaran ini
+        $snapshot = HafalanSantri::where('santri_id', $santri->id)
+            ->where('tahun_ajaran_id', $taId)
+            ->first();
+
+        $mkls = $snapshot?->mkls ?? $santri->mkls;
+        $tkt = $snapshot?->tkt ?? $santri->tkt;
+
+        // Cek target hafalan kelas santri pada snapshot tersebut
+        $targetWajibCount = DataHafalan::where('tkt', $tkt)
+            ->where('mkls', $mkls)
             ->where('kriteria', 'Wajib')
             ->count();
 
-        $targetSunnahCount = DataHafalan::where('tkt', $santri->tkt)
-            ->where('mkls', $santri->mkls)
+        $targetSunnahCount = DataHafalan::where('tkt', $tkt)
+            ->where('mkls', $mkls)
             ->where('kriteria', 'Sunnah')
             ->count();
 
@@ -218,8 +287,8 @@ class SertifikatController extends Controller
         // Cek hafalan yang diselesaikan santri di tahun ajaran ini
         $hafalanSantriIds = HafalanSantri::where('santri_id', $santri->id)
             ->where('tahun_ajaran_id', $taId)
-            ->where('tkt', $santri->tkt)
-            ->where('mkls', $santri->mkls)
+            ->where('tkt', $tkt)
+            ->where('mkls', $mkls)
             ->pluck('data_hafalan_id')
             ->toArray();
 

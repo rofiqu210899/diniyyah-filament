@@ -395,22 +395,27 @@
                 ]);
                 $alamatFormatted = !empty($alamatParts) ? implode(', ', $alamatParts) : '-';
 
+                $mkls = $item['mkls'] ?? $santri->mkls;
+                $tkt = $item['tkt'] ?? $santri->tkt;
+                $mbag = $item['mbag'] ?? $santri->mbag;
+                $jenjangNama = $item['jenjang_nama'] ?? ($santri->madin?->madin ?? '');
+
                 // Format Kelas
-                $kelasDiniyyah = trim("{$santri->mkls} {$santri->mbag} {$santri->madin?->madin}");
+                $kelasDiniyyah = trim("{$mkls} {$mbag} {$jenjangNama}");
 
                 // Format Mustahiq (Capitalize Each Word)
                 $mustahiqFormatted = $mustahiq ? ucwords(strtolower(trim($mustahiq))) : '-';
 
                 // Atas Prestasinya: Ambil HANYA hafalan yang telah diselesaikan (tuntas) oleh santri & Capitalize Each Word
-                $currentTaId = $student['tahun_ajaran_id'] ?? ($tahunAjaranId ?? \App\Models\TahunAjaran::getAktif()?->id);
+                $currentTaId = $item['tahun_ajaran_id'] ?? ($tahunAjaranId ?? \App\Models\TahunAjaran::getAktif()?->id);
 
-                $targetHafalanList = \App\Models\DataHafalan::whereIn('id', function ($sub) use ($santri, $currentTaId) {
+                $targetHafalanList = \App\Models\DataHafalan::whereIn('id', function ($sub) use ($santri, $currentTaId, $tkt, $mkls) {
                     $sub->select('data_hafalan_id')
                         ->from('hafalan_santris')
                         ->where('santri_id', $santri->id)
                         ->where('tahun_ajaran_id', $currentTaId)
-                        ->where('tkt', $santri->tkt)
-                        ->where('mkls', $santri->mkls);
+                        ->where('tkt', $tkt)
+                        ->where('mkls', $mkls);
                 })
                 ->orderByRaw("FIELD(kriteria, 'Wajib', 'Sunnah', 'Wisuda') ASC")
                 ->orderBy('nama_hafalan', 'asc')
@@ -419,8 +424,8 @@
 
                 // Fallback jika belum ada data setoran (misal saat pratinjau desain setting dengan dummy santri)
                 if (empty($targetHafalanList)) {
-                    $targetHafalanList = \App\Models\DataHafalan::where('mkls', $santri->mkls)
-                        ->where('tkt', $santri->tkt)
+                    $targetHafalanList = \App\Models\DataHafalan::where('mkls', $mkls)
+                        ->where('tkt', $tkt)
                         ->orderByRaw("FIELD(kriteria, 'Wajib', 'Sunnah', 'Wisuda') ASC")
                         ->orderBy('nama_hafalan', 'asc')
                         ->pluck('nama_hafalan')
@@ -430,7 +435,7 @@
                 $prestasiText = $setting->atas_prestasinya ?: 'Hafal [hafalan]';
                 $prestasiText = str_replace(
                     ['[hafalan]', '[kelas]', '[jenjang]', '[tahun_ajaran]'],
-                    [$targetHafalanList ?: 'Hafalan Target', $kelasDiniyyah, $santri->madin?->madin ?? '', $tahunAjaranNama],
+                    [$targetHafalanList ?: 'Hafalan Target', $kelasDiniyyah, $jenjangNama, $tahunAjaranNama],
                     $prestasiText
                 );
                 $prestasiFormatted = ucwords(strtolower(trim($prestasiText)));
@@ -439,8 +444,8 @@
                 $nomorSurat = $setting->formatNomorSertifikat($index, [
                     '[nis]' => $santri->noin,
                     '[nama]' => $santri->nm,
-                    '[kelas]' => $santri->mkls,
-                    '[jenjang]' => $santri->madin?->madin ?? '',
+                    '[kelas]' => $mkls,
+                    '[jenjang]' => $jenjangNama,
                     '[tahun_ajaran]' => $tahunAjaranNama,
                 ]);
 

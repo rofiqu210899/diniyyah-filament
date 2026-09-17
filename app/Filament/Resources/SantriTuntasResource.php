@@ -66,7 +66,24 @@ class SantriTuntasResource extends Resource
 
                 Tables\Columns\TextColumn::make('kelas_diniyyah')
                     ->label('KELAS DINIYYAH')
-                    ->getStateUsing(fn($record) => "{$record->mkls} {$record->mbag} {$record->madin?->madin}")
+                    ->getStateUsing(function ($record) {
+                        static $classCache = [];
+                        $taId = request()->input('tableFilters.tahun_ajaran_id.value') ?: TahunAjaran::getAktif()?->id;
+                        $key = "{$record->id}_{$taId}";
+
+                        if (!array_key_exists($key, $classCache)) {
+                            $snapshot = HafalanSantri::where('santri_id', $record->id)
+                                ->where('tahun_ajaran_id', $taId)
+                                ->with('jenjang')
+                                ->first();
+
+                            $mkls = $snapshot?->mkls ?? $record->mkls;
+                            $jenjang = $snapshot?->jenjang?->madin ?? $record->madin?->madin;
+                            $classCache[$key] = "{$mkls} {$record->mbag} {$jenjang}";
+                        }
+
+                        return $classCache[$key];
+                    })
                     ->badge()
                     ->color('primary'),
 
@@ -80,12 +97,19 @@ class SantriTuntasResource extends Resource
                     ->getStateUsing(function ($record) {
                         static $mustahiqCache = [];
                         $taId = request()->input('tableFilters.tahun_ajaran_id.value') ?: TahunAjaran::getAktif()?->id;
-                        $key = "{$record->mkls}_{$record->mbag}_{$record->tkt}_{$record->jk}_{$taId}";
+
+                        $snapshot = HafalanSantri::where('santri_id', $record->id)
+                            ->where('tahun_ajaran_id', $taId)
+                            ->first();
+
+                        $mkls = $snapshot?->mkls ?? $record->mkls;
+                        $tkt = $snapshot?->tkt ?? $record->tkt;
+                        $key = "{$mkls}_{$record->mbag}_{$tkt}_{$record->jk}_{$taId}";
 
                         if (!array_key_exists($key, $mustahiqCache)) {
-                            $mustahiq = Mustahiq::where('mkls', $record->mkls)
+                            $mustahiq = Mustahiq::where('mkls', $mkls)
                                 ->where('mbag', $record->mbag)
-                                ->where('tkt', $record->tkt)
+                                ->where('tkt', $tkt)
                                 ->where('jk', $record->jk)
                                 ->where('tahun_ajaran_id', $taId)
                                 ->value('nama_mustahiq');
@@ -108,13 +132,20 @@ class SantriTuntasResource extends Resource
                     ->getStateUsing(function ($record) {
                         static $cacheSunnah = [];
                         $taId = request()->input('tableFilters.tahun_ajaran_id.value') ?: TahunAjaran::getAktif()?->id;
-                        $key = "{$record->id}_{$record->mkls}_{$record->tkt}_{$taId}";
+
+                        $snapshot = HafalanSantri::where('santri_id', $record->id)
+                            ->where('tahun_ajaran_id', $taId)
+                            ->first();
+
+                        $mkls = $snapshot?->mkls ?? $record->mkls;
+                        $tkt = $snapshot?->tkt ?? $record->tkt;
+                        $key = "{$record->id}_{$mkls}_{$tkt}_{$taId}";
 
                         if (!array_key_exists($key, $cacheSunnah)) {
                             $count = HafalanSantri::where('santri_id', $record->id)
                                 ->where('tahun_ajaran_id', $taId)
-                                ->where('tkt', $record->tkt)
-                                ->where('mkls', $record->mkls)
+                                ->where('tkt', $tkt)
+                                ->where('mkls', $mkls)
                                 ->whereHas('dataHafalan', fn($q) => $q->where('kriteria', 'Sunnah'))
                                 ->count();
                             $cacheSunnah[$key] = $count;
@@ -149,39 +180,44 @@ class SantriTuntasResource extends Resource
                             return $query->whereRaw('1 = 0');
                         }
 
-                        return $query->where(function (Builder $q) use ($taId) {
-                            $q->whereRaw("(
-                                SELECT COUNT(DISTINCT hs.data_hafalan_id) 
-                                FROM hafalan_santris hs 
-                                JOIN data_hafalans dh ON hs.data_hafalan_id = dh.id 
-                                WHERE hs.santri_id = bukuinduk.id 
-                                  AND hs.tahun_ajaran_id = ? 
-                                  AND hs.mkls = bukuinduk.mkls 
-                                  AND hs.tkt = bukuinduk.tkt 
-                                  AND dh.kriteria = 'Wajib'
-                            ) >= (
-                                SELECT COUNT(*) 
-                                FROM data_hafalans dh 
-                                WHERE dh.mkls = bukuinduk.mkls 
-                                  AND dh.tkt = bukuinduk.tkt 
-                                  AND dh.kriteria = 'Wajib'
-                            ) AND (
-                                SELECT COUNT(*) 
-                                FROM data_hafalans dh 
-                                WHERE dh.mkls = bukuinduk.mkls 
-                                  AND dh.tkt = bukuinduk.tkt 
-                                  AND dh.kriteria = 'Wajib'
-                            ) > 0", [$taId])
-                            ->whereRaw("(
-                                SELECT COUNT(DISTINCT hs.data_hafalan_id) 
-                                FROM hafalan_santris hs 
-                                JOIN data_hafalans dh ON hs.data_hafalan_id = dh.id 
-                                WHERE hs.santri_id = bukuinduk.id 
-                                  AND hs.tahun_ajaran_id = ? 
-                                  AND hs.mkls = bukuinduk.mkls 
-                                  AND hs.tkt = bukuinduk.tkt 
-                                  AND dh.kriteria = 'Sunnah'
-                            ) >= 1", [$taId]);
+                        return $query->whereExists(function ($sub) use ($taId) {
+                            $sub->selectRaw(1)
+                                ->from('hafalan_santris as hs_main')
+                                ->whereColumn('hs_main.santri_id', 'bukuinduk.id')
+                                ->where('hs_main.tahun_ajaran_id', $taId)
+                                ->whereRaw("(
+                                    SELECT COUNT(DISTINCT hs.data_hafalan_id) 
+                                    FROM hafalan_santris hs 
+                                    JOIN data_hafalans dh ON hs.data_hafalan_id = dh.id 
+                                    WHERE hs.santri_id = bukuinduk.id 
+                                      AND hs.tahun_ajaran_id = hs_main.tahun_ajaran_id 
+                                      AND hs.mkls = hs_main.mkls 
+                                      AND hs.tkt = hs_main.tkt 
+                                      AND dh.kriteria = 'Wajib'
+                                ) >= (
+                                    SELECT COUNT(*) 
+                                    FROM data_hafalans dh 
+                                    WHERE dh.mkls = hs_main.mkls 
+                                      AND dh.tkt = hs_main.tkt 
+                                      AND dh.kriteria = 'Wajib'
+                                )")
+                                ->whereRaw("(
+                                    SELECT COUNT(*) 
+                                    FROM data_hafalans dh 
+                                    WHERE dh.mkls = hs_main.mkls 
+                                      AND dh.tkt = hs_main.tkt 
+                                      AND dh.kriteria = 'Wajib'
+                                ) > 0")
+                                ->whereRaw("(
+                                    SELECT COUNT(DISTINCT hs.data_hafalan_id) 
+                                    FROM hafalan_santris hs 
+                                    JOIN data_hafalans dh ON hs.data_hafalan_id = dh.id 
+                                    WHERE hs.santri_id = bukuinduk.id 
+                                      AND hs.tahun_ajaran_id = hs_main.tahun_ajaran_id 
+                                      AND hs.mkls = hs_main.mkls 
+                                      AND hs.tkt = hs_main.tkt 
+                                      AND dh.kriteria = 'Sunnah'
+                                ) >= 1");
                         });
                     }),
 
@@ -190,7 +226,32 @@ class SantriTuntasResource extends Resource
                     ->options(
                         Madin::whereNotIn('id', [4, 5, 6])->pluck('madin', 'id')
                     )
-                    ->query(fn(Builder $query, array $data) => filled($data['value']) ? $query->where('tkt', $data['value']) : $query),
+                    ->query(function (Builder $query, array $data): Builder {
+                        if (!filled($data['value'])) return $query;
+                        $tkt = (int) $data['value'];
+                        $taId = request()->input('tableFilters.tahun_ajaran_id.value') ?: TahunAjaran::getAktif()?->id;
+
+                        return $query->where(function ($q) use ($tkt, $taId) {
+                            $q->whereExists(function ($sub) use ($tkt, $taId) {
+                                $sub->selectRaw(1)
+                                    ->from('hafalan_santris')
+                                    ->whereColumn('santri_id', 'bukuinduk.id')
+                                    ->where('tkt', $tkt);
+                                if ($taId) {
+                                    $sub->where('tahun_ajaran_id', $taId);
+                                }
+                            })->orWhere(function ($fallback) use ($tkt, $taId) {
+                                $fallback->whereNotExists(function ($sub) use ($taId) {
+                                    $sub->selectRaw(1)
+                                        ->from('hafalan_santris')
+                                        ->whereColumn('santri_id', 'bukuinduk.id');
+                                    if ($taId) {
+                                        $sub->where('tahun_ajaran_id', $taId);
+                                    }
+                                })->where('tkt', $tkt);
+                            });
+                        });
+                    }),
 
                 Tables\Filters\SelectFilter::make('mkls')
                     ->label('Kelas Diniyyah')
@@ -202,7 +263,32 @@ class SantriTuntasResource extends Resource
                         5 => 'Kelas 5',
                         6 => 'Kelas 6',
                     ])
-                    ->query(fn(Builder $query, array $data) => filled($data['value']) ? $query->where('mkls', $data['value']) : $query),
+                    ->query(function (Builder $query, array $data): Builder {
+                        if (!filled($data['value'])) return $query;
+                        $mkls = (int) $data['value'];
+                        $taId = request()->input('tableFilters.tahun_ajaran_id.value') ?: TahunAjaran::getAktif()?->id;
+
+                        return $query->where(function ($q) use ($mkls, $taId) {
+                            $q->whereExists(function ($sub) use ($mkls, $taId) {
+                                $sub->selectRaw(1)
+                                    ->from('hafalan_santris')
+                                    ->whereColumn('santri_id', 'bukuinduk.id')
+                                    ->where('mkls', $mkls);
+                                if ($taId) {
+                                    $sub->where('tahun_ajaran_id', $taId);
+                                }
+                            })->orWhere(function ($fallback) use ($mkls, $taId) {
+                                $fallback->whereNotExists(function ($sub) use ($taId) {
+                                    $sub->selectRaw(1)
+                                        ->from('hafalan_santris')
+                                        ->whereColumn('santri_id', 'bukuinduk.id');
+                                    if ($taId) {
+                                        $sub->where('tahun_ajaran_id', $taId);
+                                    }
+                                })->where('mkls', $mkls);
+                            });
+                        });
+                    }),
 
                 Tables\Filters\SelectFilter::make('mbag')
                     ->label('Bagian')

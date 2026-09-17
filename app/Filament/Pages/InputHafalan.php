@@ -360,14 +360,23 @@ class InputHafalan extends Page implements HasForms
         }
 
         
+        $existingClass = HafalanSantri::where('santri_id', $santriId)
+            ->where('tahun_ajaran_id', $tahunAjaran->id)
+            ->first();
+
+        $savedMkls = $existingClass ? $existingClass->mkls : $santri->mkls;
+        $savedTkt  = $existingClass ? $existingClass->tkt : $santri->tkt;
+        $savedKls  = $existingClass ? $existingClass->kls : $santri->kls;
+        $savedUnit = $existingClass ? $existingClass->unit : $santri->unit;
+
         HafalanSantri::create([
             'santri_id' => $santriId,
             'data_hafalan_id' => $dataHafalanId,
             'tahun_ajaran_id' => $tahunAjaran->id,
-            'mkls' => $santri->mkls,
-            'tkt' => $santri->tkt,
-            'kls' => $santri->kls,
-            'unit' => $santri->unit,
+            'mkls' => $savedMkls,
+            'tkt' => $savedTkt,
+            'kls' => $savedKls,
+            'unit' => $savedUnit,
         ]);
 
         $this->hafalanChecked[] = $dataHafalanId;
