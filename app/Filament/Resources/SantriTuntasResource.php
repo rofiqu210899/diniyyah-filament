@@ -35,6 +35,19 @@ class SantriTuntasResource extends Resource
         return $form->schema([]);
     }
 
+    public static function getFilterTahunAjaranId($livewire = null): ?int
+    {
+        if ($livewire && isset($livewire->tableFilters['tahun_ajaran_id']['value']) && filled($livewire->tableFilters['tahun_ajaran_id']['value'])) {
+            return (int) $livewire->tableFilters['tahun_ajaran_id']['value'];
+        }
+
+        if (request()->filled('tableFilters.tahun_ajaran_id.value')) {
+            return (int) request()->input('tableFilters.tahun_ajaran_id.value');
+        }
+
+        return TahunAjaran::getAktif()?->id;
+    }
+
     public static function table(Table $table): Table
     {
         return $table
@@ -66,9 +79,9 @@ class SantriTuntasResource extends Resource
 
                 Tables\Columns\TextColumn::make('kelas_diniyyah')
                     ->label('KELAS DINIYYAH')
-                    ->getStateUsing(function ($record) {
+                    ->getStateUsing(function ($record, $livewire) {
                         static $classCache = [];
-                        $taId = request()->input('tableFilters.tahun_ajaran_id.value') ?: TahunAjaran::getAktif()?->id;
+                        $taId = static::getFilterTahunAjaranId($livewire);
                         $key = "{$record->id}_{$taId}";
 
                         if (!array_key_exists($key, $classCache)) {
@@ -94,9 +107,9 @@ class SantriTuntasResource extends Resource
 
                 Tables\Columns\TextColumn::make('mustahiq')
                     ->label('MUSTAHIQ / WALI KELAS')
-                    ->getStateUsing(function ($record) {
+                    ->getStateUsing(function ($record, $livewire) {
                         static $mustahiqCache = [];
-                        $taId = request()->input('tableFilters.tahun_ajaran_id.value') ?: TahunAjaran::getAktif()?->id;
+                        $taId = static::getFilterTahunAjaranId($livewire);
 
                         $snapshot = HafalanSantri::where('santri_id', $record->id)
                             ->where('tahun_ajaran_id', $taId)
@@ -129,9 +142,9 @@ class SantriTuntasResource extends Resource
 
                 Tables\Columns\TextColumn::make('status_sunnah')
                     ->label('HAFALAN SUNNAH')
-                    ->getStateUsing(function ($record) {
+                    ->getStateUsing(function ($record, $livewire) {
                         static $cacheSunnah = [];
-                        $taId = request()->input('tableFilters.tahun_ajaran_id.value') ?: TahunAjaran::getAktif()?->id;
+                        $taId = static::getFilterTahunAjaranId($livewire);
 
                         $snapshot = HafalanSantri::where('santri_id', $record->id)
                             ->where('tahun_ajaran_id', $taId)
@@ -189,7 +202,7 @@ class SantriTuntasResource extends Resource
                                     SELECT COUNT(DISTINCT hs.data_hafalan_id) 
                                     FROM hafalan_santris hs 
                                     JOIN data_hafalans dh ON hs.data_hafalan_id = dh.id 
-                                    WHERE hs.santri_id = bukuinduk.id 
+                                    WHERE hs.santri_id = hs_main.santri_id 
                                       AND hs.tahun_ajaran_id = hs_main.tahun_ajaran_id 
                                       AND hs.mkls = hs_main.mkls 
                                       AND hs.tkt = hs_main.tkt 
@@ -212,7 +225,7 @@ class SantriTuntasResource extends Resource
                                     SELECT COUNT(DISTINCT hs.data_hafalan_id) 
                                     FROM hafalan_santris hs 
                                     JOIN data_hafalans dh ON hs.data_hafalan_id = dh.id 
-                                    WHERE hs.santri_id = bukuinduk.id 
+                                    WHERE hs.santri_id = hs_main.santri_id 
                                       AND hs.tahun_ajaran_id = hs_main.tahun_ajaran_id 
                                       AND hs.mkls = hs_main.mkls 
                                       AND hs.tkt = hs_main.tkt 
@@ -226,30 +239,19 @@ class SantriTuntasResource extends Resource
                     ->options(
                         Madin::whereNotIn('id', [4, 5, 6])->pluck('madin', 'id')
                     )
-                    ->query(function (Builder $query, array $data): Builder {
+                    ->query(function (Builder $query, array $data, $livewire): Builder {
                         if (!filled($data['value'])) return $query;
                         $tkt = (int) $data['value'];
-                        $taId = request()->input('tableFilters.tahun_ajaran_id.value') ?: TahunAjaran::getAktif()?->id;
+                        $taId = static::getFilterTahunAjaranId($livewire);
 
-                        return $query->where(function ($q) use ($tkt, $taId) {
-                            $q->whereExists(function ($sub) use ($tkt, $taId) {
-                                $sub->selectRaw(1)
-                                    ->from('hafalan_santris')
-                                    ->whereColumn('santri_id', 'bukuinduk.id')
-                                    ->where('tkt', $tkt);
-                                if ($taId) {
-                                    $sub->where('tahun_ajaran_id', $taId);
-                                }
-                            })->orWhere(function ($fallback) use ($tkt, $taId) {
-                                $fallback->whereNotExists(function ($sub) use ($taId) {
-                                    $sub->selectRaw(1)
-                                        ->from('hafalan_santris')
-                                        ->whereColumn('santri_id', 'bukuinduk.id');
-                                    if ($taId) {
-                                        $sub->where('tahun_ajaran_id', $taId);
-                                    }
-                                })->where('tkt', $tkt);
-                            });
+                        return $query->whereExists(function ($sub) use ($tkt, $taId) {
+                            $sub->selectRaw(1)
+                                ->from('hafalan_santris')
+                                ->whereColumn('santri_id', 'bukuinduk.id')
+                                ->where('tkt', $tkt);
+                            if ($taId) {
+                                $sub->where('tahun_ajaran_id', $taId);
+                            }
                         });
                     }),
 
@@ -263,30 +265,19 @@ class SantriTuntasResource extends Resource
                         5 => 'Kelas 5',
                         6 => 'Kelas 6',
                     ])
-                    ->query(function (Builder $query, array $data): Builder {
+                    ->query(function (Builder $query, array $data, $livewire): Builder {
                         if (!filled($data['value'])) return $query;
                         $mkls = (int) $data['value'];
-                        $taId = request()->input('tableFilters.tahun_ajaran_id.value') ?: TahunAjaran::getAktif()?->id;
+                        $taId = static::getFilterTahunAjaranId($livewire);
 
-                        return $query->where(function ($q) use ($mkls, $taId) {
-                            $q->whereExists(function ($sub) use ($mkls, $taId) {
-                                $sub->selectRaw(1)
-                                    ->from('hafalan_santris')
-                                    ->whereColumn('santri_id', 'bukuinduk.id')
-                                    ->where('mkls', $mkls);
-                                if ($taId) {
-                                    $sub->where('tahun_ajaran_id', $taId);
-                                }
-                            })->orWhere(function ($fallback) use ($mkls, $taId) {
-                                $fallback->whereNotExists(function ($sub) use ($taId) {
-                                    $sub->selectRaw(1)
-                                        ->from('hafalan_santris')
-                                        ->whereColumn('santri_id', 'bukuinduk.id');
-                                    if ($taId) {
-                                        $sub->where('tahun_ajaran_id', $taId);
-                                    }
-                                })->where('mkls', $mkls);
-                            });
+                        return $query->whereExists(function ($sub) use ($mkls, $taId) {
+                            $sub->selectRaw(1)
+                                ->from('hafalan_santris')
+                                ->whereColumn('santri_id', 'bukuinduk.id')
+                                ->where('mkls', $mkls);
+                            if ($taId) {
+                                $sub->where('tahun_ajaran_id', $taId);
+                            }
                         });
                     }),
 
@@ -311,7 +302,7 @@ class SantriTuntasResource extends Resource
                     ->tooltip('Cetak seluruh sertifikat santri yang sesuai filter saat ini')
                     ->url(function ($livewire) {
                         $filters = $livewire->tableFilters ?? [];
-                        $taId = $filters['tahun_ajaran_id']['value'] ?? TahunAjaran::getAktif()?->id;
+                        $taId = static::getFilterTahunAjaranId($livewire);
                         $tkt = $filters['tkt']['value'] ?? null;
                         $mkls = $filters['mkls']['value'] ?? null;
                         $mbag = $filters['mbag']['value'] ?? null;
@@ -334,8 +325,7 @@ class SantriTuntasResource extends Resource
                     ->tooltip('Cetak Sertifikat')
                     ->color('primary')
                     ->url(function (SantriTuntas $record, $livewire) {
-                        $filters = $livewire->tableFilters ?? [];
-                        $taId = $filters['tahun_ajaran_id']['value'] ?? TahunAjaran::getAktif()?->id;
+                        $taId = static::getFilterTahunAjaranId($livewire);
 
                         return route('sertifikat.cetak_single', [
                             'santri' => $record->id,
@@ -350,8 +340,7 @@ class SantriTuntasResource extends Resource
                     ->color('success')
                     ->action(function (Collection $records, $livewire) {
                         $ids = $records->pluck('id')->implode(',');
-                        $filters = $livewire->tableFilters ?? [];
-                        $taId = $filters['tahun_ajaran_id']['value'] ?? TahunAjaran::getAktif()?->id;
+                        $taId = static::getFilterTahunAjaranId($livewire);
 
                         $url = route('sertifikat.cetak_kolektif', [
                             'ids' => $ids,
